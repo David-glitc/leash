@@ -2,7 +2,8 @@
  * testnet.ts - run Leash on the real QoreChain testnet (qorechain-diana).
  *
  *   pnpm testnet status     balances, post-quantum keys and windows for owner and agent
- *   pnpm testnet register   register both accounts' ML-DSA-87 keys (once each)
+ *   pnpm testnet register   register both accounts' ML-DSA-87 keys (once each; the agent needs a little QOR first)
+ *   pnpm testnet fund       owner sends 25 QOR to the agent (hybrid-signed), so one faucet claim is enough
  *   pnpm testnet all        open windows, deploy, apply a signed mandate, run the Q-Day drill, write a report
  *
  * Accounts come from .env (`pnpm accounts`). Throwaway testnet keys only.
@@ -71,8 +72,20 @@ async function status() {
   }
 }
 
+async function fund() {
+  const owner = await acct("owner"), agent = await acct("agent");
+  const have = await pub.getBalance({ address: agent.evm.address });
+  if (have >= 20n * 10n ** 18n) { console.log(`agent already has ${formatEther(have)} QOR`); return; }
+  const o = await fetchPqcStatus({ rest: REST, address: owner.unified.cosmos });
+  if (!o.registered) throw new Error("register the owner first: pnpm testnet register");
+  const msg = { typeUrl: "/cosmos.bank.v1beta1.MsgSend", value: { fromAddress: owner.unified.cosmos, toAddress: agent.unified.cosmos, amount: [{ denom: "uqor", amount: "25000000" }] } };
+  console.log(`funded agent with 25 QOR: ${await nativeTx(owner.unified, "hybrid", [msg as never])}`);
+  await sleep(8000);
+}
+
 async function register() {
   for (const role of ["owner", "agent"] as Role[]) {
+    if (role === "agent") { const b = await pub.getBalance({ address: (await acct("agent")).evm.address }); if (b === 0n) { await fund(); } }
     const a = await acct(role);
     const pqc = await fetchPqcStatus({ rest: REST, address: a.unified.cosmos });
     if (pqc.registered) { console.log(`${role}: already registered`); continue; }
@@ -143,7 +156,7 @@ async function all() {
   if (results.some((r) => !r.pass)) process.exitCode = 1;
 }
 
-const cmds: Record<string, () => Promise<void>> = { status, register, all };
+const cmds: Record<string, () => Promise<void>> = { status, register, fund, all };
 const c = cmds[process.argv[2] ?? "status"];
-if (!c) { console.error("Use: status | register | all"); process.exit(1); }
+if (!c) { console.error("Use: status | register | fund | all"); process.exit(1); }
 c().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });
