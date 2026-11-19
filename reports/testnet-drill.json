@@ -1,0 +1,105 @@
+{
+  "network": "qorechain-diana",
+  "evmChainId": 9800,
+  "guard": "0xa0ebb5daf8229da498346f0c824276d126c2a34c",
+  "otherGuard": "0xd4cd65518d5869194bae79f5f014dc56ee41b7e3",
+  "deployTx": "0x1670f698b4f7579860c679a854e077409ea952e4ba07d0e5b22ce9b867bb9669",
+  "applyTx": "0x53d44e694751f0f5ecaf614414fccafd154d6cb2ebce5caec4819dfcfe1c14ae",
+  "explorer": "https://explore.qore.network/address/0xa0ebb5daf8229da498346f0c824276d126c2a34c",
+  "seconds": 35,
+  "results": [
+    {
+      "attacker": "control",
+      "attempt": "legitimate payment inside the mandate",
+      "expected": "succeeds",
+      "outcome": "succeeded",
+      "pass": true,
+      "tx": "0x0ad9738972a37170a6c8394ac3b8393d2541d0d9cad1f1167809ae8cfa9ce54b"
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "pay more than the per-payment cap",
+      "expected": "blocked (OverPerTxLimit)",
+      "outcome": "blocked (OverPerTxLimit)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "pay an address that is not on the allowlist",
+      "expected": "blocked (RecipientNotAllowed)",
+      "outcome": "blocked (RecipientNotAllowed)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "pay in a token the mandate does not cover",
+      "expected": "blocked (TokenNotSpendable)",
+      "outcome": "blocked (TokenNotSpendable)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "keep paying after the daily cap (900000000000000000 left)",
+      "expected": "blocked (OverDailyLimit)",
+      "outcome": "blocked (OverDailyLimit)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "loosen the mandate with a forged post-quantum signature",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "loosen the mandate with a signature for a different mandate",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "replay the owner's signature from a different guard",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "spend directly",
+      "expected": "blocked (NotAgent)",
+      "outcome": "blocked (NotAgent)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "grant itself a bigger mandate (no post-quantum signature)",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "freeze the guard (the kill switch)",
+      "expected": "allowed (it can only stop things)",
+      "outcome": "allowed",
+      "pass": true,
+      "tx": "0x7382c8add9a5f7f854013ea5bd5671a41978e26d7f888c4e48d1eff56090211b"
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "keep paying after the freeze",
+      "expected": "blocked (IsFrozen)",
+      "outcome": "blocked (IsFrozen)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "unfreeze with an old signature",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    }
+  ]
+}

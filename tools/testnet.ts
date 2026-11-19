@@ -16,7 +16,7 @@ import {
   signProofOfPossession, pqcSign, type UnifiedAccount,
 } from "@qorechain/sdk";
 import { evmWindowCost, evmWindowStatus } from "@qorechain/evm";
-import { createPublicClient, createWalletClient, defineChain, http, hexToBytes, toHex, formatEther, type Address, type Hex } from "viem";
+import { createPublicClient, createWalletClient, defineChain, http, hexToBytes, toHex, formatEther, parseAbi, type Address, type Hex } from "viem";
 import { mnemonicToAccount, generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { compile } from "./policy.ts";
 import { runSuite, render, guardAbi, wireMandate, type PqcSigner } from "./attack.ts";
@@ -32,6 +32,12 @@ const EVM_RPC = "https://evm-testnet.qore.host";
 const chain = defineChain({ id: 9800, name: "QoreChain Testnet", nativeCurrency: { name: "QOR", symbol: "QOR", decimals: 18 }, rpcUrls: { default: { http: [EVM_RPC] } } });
 const pub = createPublicClient({ chain, transport: http(EVM_RPC) });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+async function retry<T>(label: string, fn: () => Promise<T>, tries = 4): Promise<T> {
+  for (let i = 1; ; i++) {
+    try { return await fn(); }
+    catch (e) { if (i >= tries) throw e; console.log(`  ${label}: ${e instanceof Error ? e.message : e} (retry ${i}/${tries - 1})`); await sleep(4000 * i); }
+  }
+}
 const FEE = { amount: [{ denom: "uqor", amount: "100000" }], gas: "800000" };
 const FEES = { maxFeePerGas: 250_000_000_000n, maxPriorityFeePerGas: 1_000_000_000n };
 
@@ -97,6 +103,8 @@ async function register() {
 }
 
 async function openWindow(a: A, opts: { blocks: bigint; maxTxs: bigint; gas: bigint; targets?: Address[] }) {
+  const cur = await retry("window status", () => evmWindowStatus({ rest: REST, address: a.unified.cosmos }));
+  if (cur.found && cur.live && BigInt(cur.remainingTxs) >= opts.maxTxs) { console.log(`${a.role}: window already live (${cur.remainingBlocks} blocks, ${cur.remainingTxs} txs)`); return; }
   const perTx = evmWindowCost({ gas: opts.gas, maxFeePerGas: FEES.maxFeePerGas });
   const maxValue = perTx * opts.maxTxs + (a.role === "owner" ? 20_000_000n : 0n); // owner also sends 10 QOR to the guard
   const msg = openEvmWindowMsg({ sender: a.unified.cosmos, blocks: opts.blocks, maxTxs: opts.maxTxs, maxValue, ...(opts.targets ? { allowedTargets: opts.targets } : {}) });
@@ -138,25 +146,56 @@ async function all() {
   console.log(`applyMandate ${ar.status} gas ${ar.gasUsed} (${applyHash}): pqcVerify accepted a real ML-DSA-87 signature: ${ar.status === "success"}`);
   if (ar.status !== "success") throw new Error("mandate was not applied");
 
+  mkdirSync("reports", { recursive: true });
+  writeFileSync("reports/testnet-state.json", JSON.stringify({ guard: guard.address, otherGuard: other.address, deployTx: guard.hash, applyTx: applyHash, sentence }, null, 2));
+  await drill({ guard: guard.address, otherGuard: other.address, deployTx: guard.hash, applyTx: applyHash, sentence }, t0);
+}
+
+type State = { guard: Address; otherGuard?: Address; deployTx?: string; applyTx?: string; sentence?: string };
+
+/** Rebuild the mandate from the guard's own on-chain state, so a drill can resume after a failure. */
+async function mandateFromChain(guard: Address) {
+  const abi = parseAbi([
+    "function agent() view returns (address)", "function expiry() view returns (uint64)",
+    "function tokens() view returns (address[])", "function recipients() view returns (address[])",
+    "function limitOf(address) view returns (uint128 perTx, uint128 daily)",
+  ]);
+  const read = <T,>(fn: string, args: unknown[] = []) => retry(fn, () => pub.readContract({ address: guard, abi, functionName: fn as never, args: args as never }) as Promise<T>);
+  const [agentAddr, expiry, tokens, recipients] = await Promise.all([read<Address>("agent"), read<bigint>("expiry"), read<Address[]>("tokens"), read<Address[]>("recipients")]);
+  const limits = await Promise.all(tokens.map(async (t) => { const [perTx, daily] = await read<readonly [bigint, bigint]>("limitOf", [t]); return { perTx, daily }; }));
+  return { agent: agentAddr, expiry: Number(expiry), tokens, limits, recipients };
+}
+
+async function drill(st: State, t0 = Date.now()) {
+  const owner = await acct("owner"), agent = await acct("agent");
+  const m = await mandateFromChain(st.guard);
+  const ownerPqc: PqcSigner = { sign: (msg) => toHex(pqcSign(owner.unified.pqc.secretKey, hexToBytes(msg))) };
   // 3. Agent window, scoped to the guard only. The agent never holds an ML-DSA-87 key for spending.
-  await openWindow(agent, { blocks: 1200n, maxTxs: 10n, gas: 1_500_000n, targets: [guard.address] });
+  await openWindow(agent, { blocks: 1200n, maxTxs: 10n, gas: 1_500_000n, targets: [st.guard] });
 
   // 4. The Q-Day drill on the real chain.
   const stranger = createWalletClient({ chain, transport: http(EVM_RPC), account: privateKeyToAccount(generatePrivateKey()) });
   const results = await runSuite({
-    chain, pub, guard: guard.address, agent: agent.wallet as never, owner: owner.wallet as never, stranger: stranger as never,
-    ownerPqc, mandate: m, otherGuard: other.address, gas: 1_500_000n,
+    chain, pub, guard: st.guard, agent: agent.wallet as never, owner: owner.wallet as never, stranger: stranger as never,
+    ownerPqc, mandate: m, otherGuard: st.otherGuard, gas: 1_500_000n,
   });
   console.log("\n" + render(results));
   mkdirSync("reports", { recursive: true });
   writeFileSync("reports/testnet-drill.json", JSON.stringify({
-    network: "qorechain-diana", evmChainId: 9800, sentence, guard: guard.address, otherGuard: other.address, deployTx: guard.hash, applyTx: applyHash,
-    explorer: `https://explore.qore.network/address/${guard.address}`, seconds: Math.round((Date.now() - t0) / 1000), results,
+    network: "qorechain-diana", evmChainId: 9800, sentence: st.sentence, guard: st.guard, otherGuard: st.otherGuard, deployTx: st.deployTx, applyTx: st.applyTx,
+    explorer: `https://explore.qore.network/address/${st.guard}`, seconds: Math.round((Date.now() - t0) / 1000), results,
   }, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2));
   if (results.some((r) => !r.pass)) process.exitCode = 1;
 }
 
-const cmds: Record<string, () => Promise<void>> = { status, register, fund, all };
+
+async function resume() {
+  const f = "reports/testnet-state.json";
+  const st: State = process.argv[3] ? { guard: process.argv[3] as Address, otherGuard: process.argv[4] as Address | undefined } : JSON.parse(readFileSync(f, "utf8"));
+  await drill(st);
+}
+
+const cmds: Record<string, () => Promise<void>> = { status, register, fund, all, drill: resume };
 const c = cmds[process.argv[2] ?? "status"];
-if (!c) { console.error("Use: status | register | fund | all"); process.exit(1); }
+if (!c) { console.error("Use: status | register | fund | all | drill [guard] [otherGuard]"); process.exit(1); }
 c().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });
