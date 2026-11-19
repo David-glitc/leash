@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><style>
+*{box-sizing:border-box}body{margin:0;width:1600px;height:900px;background:#0b1020;color:#eaf0ff;font-family:Inter,"Segoe UI",system-ui,sans-serif;position:relative;overflow:hidden}
+.glow{position:absolute;right:-200px;top:-200px;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,#2a6bff55,#0b102000 65%)}
+.wrap{position:absolute;left:110px;top:100px;right:110px}
+.tag{font:600 22px ui-monospace,monospace;letter-spacing:.14em;color:#6fa2ff;text-transform:uppercase}
+h1{font-size:200px;line-height:1;margin:18px 0 10px;letter-spacing:-.04em}
+.lead{font-size:46px;line-height:1.25;max-width:1250px;color:#c9d6f5}
+.lead b{color:#fff}
+.rows{position:absolute;left:110px;right:110px;bottom:90px;display:flex;gap:24px}
+.card{flex:1;border:1px solid #2b3a66;border-radius:18px;padding:26px 28px;background:#111a35}
+.card h3{margin:0 0 8px;font-size:26px;color:#fff}.card p{margin:0;font-size:23px;color:#9fb2e0;line-height:1.35}
+.card h3.ok{color:#5ee3a1}.card h3.stop{color:#ffb86b}.card h3.pq{color:#9d8cff}
+.badge{position:absolute;right:110px;top:112px;border:1px solid #2f7a58;color:#5ee3a1;border-radius:999px;padding:12px 24px;font:600 24px ui-monospace,monospace;background:#0e2a22}
+</style><div class="glow"></div><div class="badge">Q-Day drill 13/13 on qorechain-diana</div>
+<div class="wrap"><div class="tag">Post-Quantum AI Agents · Build Before Q-Day</div><h1>Leash</h1>
+<div class="lead">A spending leash for AI agents. <b>A classical key can only stop things.</b> Starting or loosening anything needs a post-quantum signature.</div></div>
+<div class="rows">
+<div class="card"><h3 class="ok">Agent key</h3><p>Spends inside a mandate: caps, allowlist, expiry.</p></div>
+<div class="card"><h3 class="stop">Owner classical key</h3><p>Can freeze. Cannot grant, loosen or unfreeze.</p></div>
+<div class="card"><h3 class="pq">Owner ML-DSA-87 key</h3><p>Signs mandates, verified on chain by pqcVerify.</p></div></div>
