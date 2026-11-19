@@ -8,6 +8,7 @@
   "scripts": {
     "test": "forge test && tsx --test tools/*.test.ts",
     "compile": "tsx tools/leash.ts compile",
+    "demo:local": "tsx tools/local.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
