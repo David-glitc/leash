@@ -1,20 +1,28 @@
 <!doctype html><meta charset="utf-8"><style>
-*{box-sizing:border-box}body{margin:0;width:1600px;height:900px;background:#0b1020;color:#eaf0ff;font-family:Inter,"Segoe UI",system-ui,sans-serif;position:relative;overflow:hidden}
-.glow{position:absolute;right:-200px;top:-200px;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,#2a6bff55,#0b102000 65%)}
-.wrap{position:absolute;left:110px;top:100px;right:110px}
-.tag{font:600 22px ui-monospace,monospace;letter-spacing:.14em;color:#6fa2ff;text-transform:uppercase}
-h1{font-size:200px;line-height:1;margin:18px 0 10px;letter-spacing:-.04em}
-.lead{font-size:46px;line-height:1.25;max-width:1250px;color:#c9d6f5}
-.lead b{color:#fff}
-.rows{position:absolute;left:110px;right:110px;bottom:90px;display:flex;gap:24px}
-.card{flex:1;border:1px solid #2b3a66;border-radius:18px;padding:26px 28px;background:#111a35}
-.card h3{margin:0 0 8px;font-size:26px;color:#fff}.card p{margin:0;font-size:23px;color:#9fb2e0;line-height:1.35}
-.card h3.ok{color:#5ee3a1}.card h3.stop{color:#ffb86b}.card h3.pq{color:#9d8cff}
-.badge{position:absolute;right:110px;top:34px;border:1px solid #2f7a58;color:#5ee3a1;border-radius:999px;padding:12px 24px;font:600 24px ui-monospace,monospace;background:#0e2a22}
-</style><div class="glow"></div><div class="badge">Q-Day drill 15/15 · 800 attacks, 0 violations</div>
-<div class="wrap"><div class="tag">Post-Quantum AI Agents · Build Before Q-Day</div><h1>Leash</h1>
-<div class="lead">A spending leash for AI agents. <b>A classical key can only stop things.</b> Starting or loosening anything needs a post-quantum signature.</div></div>
+@font-face{font-family:"Geist";src:url(site/assets/fonts/Geist-Variable.woff2) format("woff2");font-weight:100 900}
+@font-face{font-family:"Geist Mono";src:url(site/assets/fonts/GeistMono-Variable.woff2) format("woff2");font-weight:100 900}
+*{box-sizing:border-box}
+body{margin:0;width:1600px;height:900px;background:#000;color:#ededed;font-family:"Geist",system-ui,sans-serif;position:relative;overflow:hidden;-webkit-font-smoothing:antialiased}
+.mesh{position:absolute;left:520px;top:-260px;width:1500px;height:1100px;opacity:.5;filter:blur(90px);
+ background:radial-gradient(36% 40% at 62% 36%,#007cf0,transparent 70%),radial-gradient(30% 36% at 40% 52%,#50e3c2,transparent 72%),radial-gradient(34% 40% at 84% 56%,#7928ca,transparent 70%),radial-gradient(26% 30% at 70% 80%,#ff0080,transparent 72%)}
+.dots{position:absolute;inset:0;background:radial-gradient(circle,#27458a 1.6px,transparent 2.2px) 0 0/22px 22px;-webkit-mask-image:radial-gradient(ellipse 70% 80% at 85% 40%,#000 0%,transparent 70%);opacity:.9}
+.logo{position:absolute;right:84px;top:40px;width:530px;height:530px;filter:drop-shadow(0 30px 80px #2563eb88)}
+.wrap{position:absolute;left:110px;top:84px;width:820px}
+.tag{font:500 22px "Geist Mono",monospace;letter-spacing:.14em;color:#7aa7ff;text-transform:uppercase}
+h1{font-size:190px;line-height:1;margin:16px 0 14px;letter-spacing:-.055em;font-weight:620}
+.lead{font-size:37px;line-height:1.28;max-width:790px;color:#a8a8a8;letter-spacing:-.015em}
+.lead b{color:#fff;font-weight:560}
+.badge{display:inline-block;margin-top:28px;border:1px solid #1f5a42;color:#3ddc97;border-radius:999px;padding:12px 26px;font:500 24px "Geist Mono",monospace;background:#06160f}
+.rows{position:absolute;left:110px;right:110px;bottom:70px;display:flex;gap:22px}
+.card{flex:1;border:1px solid #262626;border-radius:20px;padding:26px 30px;background:linear-gradient(#0c0c0c,#060606)}
+.card h3{margin:0 0 10px;font-size:28px;font-weight:600;letter-spacing:-.02em;display:flex;align-items:center;gap:12px}
+.card h3 i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.card p{margin:0;font-size:23px;color:#9a9a9a;line-height:1.38}
+</style><div class="mesh"></div><div class="dots"></div><img class="logo" src="site/assets/logo.svg">
+<div class="wrap"><div class="tag">Post-Quantum AI Agents &middot; Build Before Q-Day</div><h1>Leash</h1>
+<div class="lead">A spending leash for AI agents. <b>A classical key can only stop things.</b> Loosening anything needs a post-quantum signature.</div>
+<div class="badge">Q-Day drill 15/15 &middot; 800 attacks, 0 violations</div></div>
 <div class="rows">
-<div class="card"><h3 class="ok">Agent key</h3><p>Pays, swaps and uses vaults inside a mandate. The chain measures every action.</p></div>
-<div class="card"><h3 class="stop">Owner classical key</h3><p>Can freeze. Cannot grant, loosen or unfreeze.</p></div>
-<div class="card"><h3 class="pq">Owner ML-DSA-87 key</h3><p>Signs mandates, verified on chain by pqcVerify.</p></div></div>
+<div class="card"><h3><i style="background:#5b94ff"></i>Agent key</h3><p>Pays, swaps and uses vaults inside a mandate. The chain measures every action.</p></div>
+<div class="card"><h3><i style="background:#f5a623"></i>Owner classical key</h3><p>Can freeze. Cannot grant, loosen or unfreeze.</p></div>
+<div class="card"><h3><i style="background:#b58cf0"></i>Owner ML-DSA-87 key</h3><p>Signs mandates, verified on chain by pqcVerify.</p></div></div>

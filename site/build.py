@@ -59,12 +59,12 @@ def head(title: str, desc: str, path: str) -> str:
 <title>{t}</title><meta name="description" content="{d}"><link rel="canonical" href="{BASE}{path}"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <meta property="og:title" content="{t}"><meta property="og:description" content="{d}"><meta property="og:type" content="website"><meta property="og:url" content="{BASE}{path}"><meta property="og:image" content="{BASE}/assets/cover.png">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{BASE}/assets/cover.png"><meta name="color-scheme" content="dark light">
-<link rel="stylesheet" href="/assets/site.css"></head><body>"""
+<script src="/assets/theme.js"></script><link rel="stylesheet" href="/assets/site.css"></head><body>"""
 
 def header(active: str = "") -> str:
     def a(href, label, key): return f'<a href="{href}"{" class=on" if active == key else ""}>{label}</a>'
-    return f"""<header class="top"><div class="in"><a class="brand" href="/">Leash<b>.</b></a><nav class="main">
-{a("/try/", "Try it", "try")}{a("/docs/judges/", "For judges", "judges")}{a("/docs/getting-started/", "Docs", "docs")}{a("/docs/threat-model/", "Security", "sec")}{a(VIDEO, "Demo video", "v")}<a href="{GH}">GitHub</a></nav></div></header>"""
+    return f"""<header class="top"><div class="in"><a class="brand" href="/"><img src="/assets/mark.svg" width="26" height="26" alt="">Leash</a><nav class="main">
+{a("/try/", "Try it", "try")}{a("/docs/judges/", "For judges", "judges")}{a("/docs/getting-started/", "Docs", "docs")}{a("/docs/threat-model/", "Security", "sec")}{a(VIDEO, "Demo video", "v")}<a href="{GH}">GitHub</a></nav><button class="themebtn" type="button" id="theme-toggle" aria-label="Switch between dark and light theme"><svg class="moon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg><svg class="sun" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div></header>"""
 
 FOOT = f"""<footer>Leash is open source (Apache-2.0), unaudited, and runs on the QoreChain testnet. Built for QoreChain Build Before Q-Day.<br>
 <a href="{GH}">Source</a> · <a href="/docs/judges/">Verify it yourself</a> · <a href="/llms.txt">llms.txt</a> · <a href="{GH}/blob/main/SECURITY.md">Report a vulnerability</a></footer><script src="/assets/site.js"></script></body></html>"""
@@ -112,7 +112,7 @@ def try_page() -> str:
 def main():
     if DIST.exists(): shutil.rmtree(DIST)
     (DIST / "assets").mkdir(parents=True)
-    for f in ("site.css", "landing.css", "landing.js", "site.js", "favicon.svg", "try.js", "leash-core.js", "verify-data.json"): shutil.copy(SITE / "assets" / f, DIST / "assets" / f)
+    for f in ("site.css", "landing.css", "landing.js", "theme.js", "site.js", "favicon.svg", "logo.svg", "mark.svg", "try.js", "leash-core.js", "verify-data.json"): shutil.copy(SITE / "assets" / f, DIST / "assets" / f)
     shutil.copytree(SITE / "assets" / "fonts", DIST / "assets" / "fonts")
     shutil.copy(ROOT / "cover.png", DIST / "assets" / "cover.png")
     (DIST / "index.html").write_text(home())

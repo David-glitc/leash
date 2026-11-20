@@ -1,3 +1,5 @@
+<p align="center"><img src="site/assets/logo.svg" width="140" alt="Leash logo: a gradient leash from an agent node to a keyhole guard"></p>
+
 # Leash
 
 **A spending leash for AI agents on QoreChain. A classical key can only stop things. Starting or loosening anything needs a post-quantum signature.**
