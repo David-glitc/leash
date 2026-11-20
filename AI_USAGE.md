@@ -19,5 +19,8 @@ Leash was built with Claude Code (Claude Sonnet 5.5) working alongside the autho
 ## How the work is verified
 The AI's claims are not trusted. They are checked by 21 contract tests (including a fuzz test), 10 compiler tests, a local end-to-end drill, a mutation check that breaks the contract three ways and confirms the drill fails each time, and a run on the real testnet with a genuine ML-DSA-87 signature.
 
+## Demo video voiceover
+The narration in the demo video was generated locally with Kokoro-82M (Apache-2.0, ONNX build from `onnx-community/Kokoro-82M-v1.0-ONNX`, voice `af_heart`). The script is the author's design, written with the AI; no recording of a real person's voice is used.
+
 ## No model at runtime
 The plain-English front end is a small deterministic grammar, not a language model. A model may help a person draft the sentence, but the compiler decides: anything it cannot parse exactly is refused.
