@@ -10,6 +10,10 @@ Built for QoreChain Developer Fest, "Build Before Q-Day", Post-Quantum AI Agents
 
 **Demo video (2:56, voiceover, music, captions):** https://david-film-library.pages.dev/media/leash-demo.mp4
 
+## Continuous integration
+
+`pnpm ci` runs the full stack locally. The same checks are written as a GitHub Actions workflow in [ci/github-actions.yml](ci/github-actions.yml); it is kept out of `.github/workflows` for now because GitHub currently refuses to start jobs for this account (a billing lock: "The job was not started because your account is locked due to a billing issue"). Moving the file to `.github/workflows/ci.yml` enables it once that is resolved.
+
 ## Documentation
 
 | | |
@@ -64,6 +68,7 @@ pnpm demo:local           # v1: payments, the full flow and the drill on a local
 pnpm demo:local:v2        # v2: every adapter, then the drill for swaps, wraps and vaults (16 checks)
 pnpm demo:monitor         # the monitor catching a burst and an unexplained outflow, freezing with a stop-only key
 pnpm mcp:e2e              # an MCP client drives swaps, wraps and vaults through the server (24 checks)
+pnpm ci                   # everything CI would run: contracts, invariants, types, tests, local end-to-end demos, docs build
 pnpm verify               # read-only check of the live testnet deployment (no keys): 22 checks
 pnpm campaign             # 800 random hostile calls against the live guard, checked by an independent oracle
 pnpm compile "agent 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 up to 3 QOR a day, at most 1 QOR per payment, only to 0x90F79bf6EB2c4f870365E785982E1f101E93b906 for 3 hours"

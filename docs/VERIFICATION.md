@@ -13,7 +13,7 @@ A claim about a contract that holds an agent's money is only worth what has been
 | 7 | **Live-chain verification** | 22 read-only checks, including that the deployed bytecode equals this source | `pnpm verify`, or the [Try it page](https://leash.kierkegaard.space/try/) in your browser |
 | 8 | **Real transactions** | A real ML-DSA-87 mandate accepted by `pqcVerify`, five adapter actions, an MCP swap and wrap | `pnpm verify` |
 
-CI runs layers 1, 2 and the TypeScript tests on every push, rebuilds the docs, and re-checks the live deployment weekly.
+`pnpm ci` runs layers 1, 2 and the TypeScript tests, the local end-to-end demos and the docs build. The same checks are written as a GitHub Actions workflow (`ci/github-actions.yml`) that is not enabled yet, because GitHub currently refuses to start jobs for the account (billing lock).
 
 ## 1 and 2: tests and invariants
 
