@@ -20,6 +20,9 @@ import { createPublicClient, createWalletClient, defineChain, http, hexToBytes, 
 import { mnemonicToAccount, generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { compile } from "./policy.ts";
 import { runSuite, render, guardAbi, wireMandate, type PqcSigner } from "./attack.ts";
+import { runSuiteV2 } from "./attack-v2.ts";
+import { guardV2Abi, wireMandateV2 } from "./wire.ts";
+import { swap, wrap, unwrap, vaultDeposit, vaultRedeem, floorOut } from "./actions.ts";
 
 for (const l of readFileSync(".env", "utf8").split("\n")) {
   const m = /^([A-Z_]+)="?(.*?)"?$/.exec(l.trim());
@@ -163,7 +166,7 @@ async function mandateFromChain(guard: Address) {
   const read = <T,>(fn: string, args: unknown[] = []) => retry(fn, () => pub.readContract({ address: guard, abi, functionName: fn as never, args: args as never }) as Promise<T>);
   const [agentAddr, expiry, tokens, recipients] = await Promise.all([read<Address>("agent"), read<bigint>("expiry"), read<Address[]>("tokens"), read<Address[]>("recipients")]);
   const limits = await Promise.all(tokens.map(async (t) => { const [perTx, daily] = await read<readonly [bigint, bigint]>("limitOf", [t]); return { perTx, daily }; }));
-  return { agent: agentAddr, expiry: Number(expiry), tokens, limits, recipients };
+  return { agent: agentAddr, expiry: Number(expiry), tokens, limits, recipients, routes: [] };
 }
 
 async function drill(st: State, t0 = Date.now()) {
@@ -208,13 +211,124 @@ async function rearm() {
   await openWindow(agent, { blocks: 1200n, maxTxs: 10n, gas: 1_500_000n, targets: [st.guard] });
 }
 
+// ------------------------------------------------------------------ LeashGuardV2: guarded actions on the real chain
+
+const art2 = (file: string, name: string) => JSON.parse(readFileSync(`out/${file}.sol/${name}.json`, "utf8"));
+const parseEth = (v: string) => BigInt(Math.round(Number(v) * 1e6)) * 10n ** 12n;
+
+type StateV2 = { guard: Address; otherGuard: Address; adapters: { univ2: Address; wrap: Address; erc4626: Address }; tokens: { USD: Address; ETHX: Address; WQOR: Address; VUSD: Address }; router: Address; shortRouter: Address; unlistedRouter: Address; vault: Address; deployTx: string; applyTx: string; sentence: string };
+
+const sentenceV2 = (agent: Address, s: StateV2) =>
+  `agent ${agent} up to 100 USD a day, at most 40 USD per payment, up to 2 QOR a day, at most 1 QOR per payment, up to 2 WQOR a day, at most 1 WQOR per payment, up to 100 VUSD a day, at most 50 VUSD per payment, `
+  + `swap USD for ETHX on ${s.router} at no worse than 0.00049 ETHX per USD, swap USD for ETHX on ${s.shortRouter} at no worse than 0.00049 ETHX per USD, `
+  + `wrap QOR into WQOR on ${s.tokens.WQOR}, unwrap WQOR to QOR on ${s.tokens.WQOR}, deposit USD into vault ${s.vault} as VUSD at no worse than 0.99 VUSD per USD, redeem VUSD from vault ${s.vault} for USD at no worse than 0.99 USD per VUSD for 5 hours`;
+const tokenRegV2 = (s: StateV2) => ({ USD: { address: s.tokens.USD, decimals: 18 }, ETHX: { address: s.tokens.ETHX, decimals: 18 }, WQOR: { address: s.tokens.WQOR, decimals: 18 }, VUSD: { address: s.tokens.VUSD, decimals: 18 } });
+
+async function applyV2(st: StateV2, owner: A, agent: A) {
+  const head = await pub.getBlock();
+  const sentence = sentenceV2(agent.evm.address, st);
+  const c = compile(sentence, { now: Number(head.timestamp), guard: st.guard, tokens: tokenRegV2(st), adapters: st.adapters });
+  if (!c.ok || !c.mandate) throw new Error(JSON.stringify(c.findings));
+  const n = (await pub.readContract({ address: st.guard, abi: guardV2Abi, functionName: "nonce" })) as bigint;
+  const message = (await pub.readContract({ address: st.guard, abi: guardV2Abi, functionName: "mandateMessage", args: [wireMandateV2(c.mandate), n] })) as Hex;
+  console.log(`mandate message ${hexToBytes(message).length} bytes; signing with the owner's ML-DSA-87 key`);
+  const sig = toHex(pqcSign(owner.unified.pqc.secretKey, hexToBytes(message)));
+  const h = await owner.wallet.writeContract({ address: st.guard, abi: guardV2Abi, functionName: "applyMandate", args: [wireMandateV2(c.mandate), sig], gas: 3_000_000n, ...FEES, account: owner.evm, chain });
+  const r = await pub.waitForTransactionReceipt({ hash: h });
+  console.log(`applyMandate ${r.status} gas ${r.gasUsed} (${h}): pqcVerify accepted a real ML-DSA-87 signature: ${r.status === "success"}`);
+  if (r.status !== "success") throw new Error("mandate was not applied");
+  return { mandate: c.mandate, sentence, applyHash: h };
+}
+
+async function allV2() {
+  const owner = await acct("owner"), agent = await acct("agent");
+  const t0 = Date.now();
+  await openWindow(owner, { blocks: 1500n, maxTxs: 36n, gas: 3_000_000n });
+  const deploy = async (file: string, name: string, args: unknown[] = [], value = 0n) => {
+    const a = art2(file, name);
+    const hash = await retry(`deploy ${name}`, () => owner.wallet.deployContract({ abi: a.abi, bytecode: a.bytecode.object as Hex, args, value, gas: 3_000_000n, ...FEES, account: owner.evm, chain }));
+    const r = await pub.waitForTransactionReceipt({ hash });
+    if (r.status !== "success" || !r.contractAddress) throw new Error(`deploy ${name} failed ${hash}`);
+    console.log(`  ${name.padEnd(16)} ${r.contractAddress}`);
+    return { address: r.contractAddress as Address, hash };
+  };
+  const write = async (to: Address, abi: unknown, fn: string, args: unknown[]) => {
+    const h = await retry(fn, () => owner.wallet.writeContract({ address: to, abi, functionName: fn, args, gas: 500_000n, ...FEES, account: owner.evm, chain } as never));
+    await pub.waitForTransactionReceipt({ hash: h });
+  };
+  console.log("deploying test tokens, routers, a vault, three adapters and two guards...");
+  const usd = await deploy("Mocks", "MockERC20"), ethx = await deploy("Mocks", "MockERC20"), wqor = await deploy("Mocks", "MockWETH");
+  const router = await deploy("Mocks", "MockRouterV2", [wqor.address]), shortRouter = await deploy("Mocks", "MockRouterV2", [wqor.address]), unlisted = await deploy("Mocks", "MockRouterV2", [wqor.address]);
+  const vault = await deploy("Mocks", "MockVault", [usd.address]);
+  const adapters = { univ2: (await deploy("UniV2Adapter", "UniV2Adapter")).address, wrap: (await deploy("WrapAdapter", "WrapAdapter")).address, erc4626: (await deploy("Erc4626Adapter", "Erc4626Adapter")).address };
+  const guard = await deploy("LeashGuardV2", "LeashGuardV2", [owner.evm.address]), other = await deploy("LeashGuardV2", "LeashGuardV2", [owner.evm.address]);
+  const rt = art2("Mocks", "MockRouterV2").abi, erc = art2("Mocks", "MockERC20").abi;
+  for (const r of [router, shortRouter, unlisted]) await write(r.address, rt, "setRate", [usd.address, ethx.address, parseEth("0.0005")]);
+  await write(shortRouter.address, rt, "setBehaviour", ["0x0000000000000000000000000000000000000000", 500n]); // under-delivers by 5 percent
+  await write(usd.address, erc, "mint", [guard.address, parseEth("1000")]);
+  const fund = await owner.wallet.sendTransaction({ to: guard.address, value: 3n * 10n ** 18n, gas: 200_000n, ...FEES, account: owner.evm, chain });
+  await pub.waitForTransactionReceipt({ hash: fund });
+  const st: StateV2 = { guard: guard.address, otherGuard: other.address, adapters, tokens: { USD: usd.address, ETHX: ethx.address, WQOR: wqor.address, VUSD: vault.address }, router: router.address, shortRouter: shortRouter.address, unlistedRouter: unlisted.address, vault: vault.address, deployTx: guard.hash, applyTx: "", sentence: "" };
+
+  const { mandate, sentence, applyHash } = await applyV2(st, owner, agent);
+  st.applyTx = applyHash; st.sentence = sentence;
+  mkdirSync("reports", { recursive: true });
+  writeFileSync("reports/testnet-v2-state.json", JSON.stringify(st, null, 2));
+  await openWindow(agent, { blocks: 1500n, maxTxs: 30n, gas: 2_000_000n, targets: [st.guard] });
+
+  // Every adapter, with the TypeScript action builders, as real transactions.
+  console.log("\nadapter tour (real transactions through the guard):");
+  const swapRoute = mandate.routes.find((r) => r.kind === "swap" && r.target.toLowerCase() === st.router.toLowerCase())!;
+  const common = { guard: st.guard, adapters };
+  const steps = [
+    wrap({ ...common, target: st.tokens.WQOR, amountIn: parseEth("1") }), unwrap({ ...common, target: st.tokens.WQOR, amountIn: parseEth("0.5") }),
+    vaultDeposit({ ...common, target: st.vault, asset: st.tokens.USD, amountIn: parseEth("40") }), vaultRedeem({ ...common, target: st.vault, asset: st.tokens.USD, amountIn: parseEth("10") }),
+    swap({ ...common, target: st.router, tokenIn: st.tokens.USD, tokenOut: st.tokens.ETHX, amountIn: parseEth("20"), minOut: floorOut(parseEth("20"), swapRoute.minOutPerInE18) }),
+  ];
+  const tour: { kind: string; ok: boolean; tx: string }[] = [];
+  for (const a of steps) {
+    const h = await retry(a.kind, () => agent.wallet.writeContract({ address: st.guard, abi: guardV2Abi, functionName: "execute", args: [a.adapter, a.target, a.data, a.value], gas: 2_000_000n, ...FEES, account: agent.evm, chain }));
+    const r = await pub.waitForTransactionReceipt({ hash: h });
+    console.log(`  ${r.status === "success" ? "ok  " : "FAIL"} ${a.kind.padEnd(8)} ${h}`);
+    tour.push({ kind: a.kind, ok: r.status === "success", tx: h });
+  }
+  await drillV2(st, owner, agent, mandate, tour, t0);
+}
+
+async function drillV2(st: StateV2, owner: A, agent: A, mandate: Awaited<ReturnType<typeof applyV2>>["mandate"], tour: unknown[], t0 = Date.now()) {
+  const ownerPqc: PqcSigner = { sign: (msg) => toHex(pqcSign(owner.unified.pqc.secretKey, hexToBytes(msg))) };
+  const stranger = createWalletClient({ chain, transport: http(EVM_RPC), account: privateKeyToAccount(generatePrivateKey()) });
+  const swapRoute = mandate.routes.find((r) => r.kind === "swap" && r.target.toLowerCase() === st.router.toLowerCase())!;
+  const results = await runSuiteV2({
+    chain, pub, guard: st.guard, agent: agent.wallet as never, owner: owner.wallet as never, stranger: stranger as never, ownerPqc, mandate,
+    swapAdapter: st.adapters.univ2, router: st.router, tokenIn: swapRoute.tokenIn, tokenOut: swapRoute.tokenOut, unlistedRouter: st.unlistedRouter, shortRouter: st.shortRouter, otherGuard: st.otherGuard, gas: 2_000_000n,
+  });
+  console.log("\n" + render(results));
+  writeFileSync("reports/testnet-v2-drill.json", JSON.stringify({
+    network: "qorechain-diana", evmChainId: 9800, sentence: st.sentence, guard: st.guard, otherGuard: st.otherGuard, adapters: st.adapters, tokens: st.tokens, router: st.router, shortRouter: st.shortRouter, vault: st.vault,
+    deployTx: st.deployTx, applyTx: st.applyTx, explorer: `https://explore.qore.network/address/${st.guard}`, seconds: Math.round((Date.now() - t0) / 1000), tour, results,
+  }, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2));
+  if (results.some((r) => !r.pass)) process.exitCode = 1;
+}
+
+/** Re-arm the v2 guard with a fresh 5-hour mandate (real ML-DSA-87 signature) and reopen the agent's scoped window. */
+async function rearmV2() {
+  const st: StateV2 = JSON.parse(readFileSync("reports/testnet-v2-state.json", "utf8"));
+  const owner = await acct("owner"), agent = await acct("agent");
+  await openWindow(owner, { blocks: 600n, maxTxs: 4n, gas: 3_000_000n });
+  const { sentence, applyHash } = await applyV2(st, owner, agent);
+  st.sentence = sentence; st.applyTx = applyHash;
+  writeFileSync("reports/testnet-v2-state.json", JSON.stringify(st, null, 2));
+  await openWindow(agent, { blocks: 1500n, maxTxs: 30n, gas: 2_000_000n, targets: [st.guard] });
+}
+
 async function resume() {
   const f = "reports/testnet-state.json";
   const st: State = process.argv[3] ? { guard: process.argv[3] as Address, otherGuard: process.argv[4] as Address | undefined } : JSON.parse(readFileSync(f, "utf8"));
   await drill(st);
 }
 
-const cmds: Record<string, () => Promise<void>> = { status, register, fund, all, drill: resume, rearm };
+const cmds: Record<string, () => Promise<void>> = { status, register, fund, all, drill: resume, rearm, v2: allV2, v2rearm: rearmV2 };
 const c = cmds[process.argv[2] ?? "status"];
-if (!c) { console.error("Use: status | register | fund | all | drill [guard] [otherGuard] | rearm"); process.exit(1); }
+if (!c) { console.error("Use: status | register | fund | all | drill [guard] [otherGuard] | rearm | v2 | v2rearm"); process.exit(1); }
 c().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });

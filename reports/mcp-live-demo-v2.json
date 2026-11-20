@@ -1,0 +1,285 @@
+{
+  "network": "qorechain-diana",
+  "guard": "0x6781ab2c589469ab91790d1a40a7de1f6d5135eb",
+  "nonce": "2",
+  "calls": [
+    {
+      "tool": "leash_status",
+      "args": {},
+      "isError": false,
+      "result": {
+        "guard": "0x6781ab2c589469ab91790d1a40a7de1f6d5135eb",
+        "version": 2,
+        "chainId": 9800,
+        "owner": "0x9fA42BbB41d8a7c13123e3BE086b79bc924B2750",
+        "agent": "0x3E137Aa22320c998405C917aa8A74d67fF23c705",
+        "frozen": false,
+        "nonce": "2",
+        "expiry": 1795183257,
+        "expiresInSeconds": 17903,
+        "expired": false,
+        "nativeBalance": "2",
+        "limits": [
+          {
+            "token": "USD",
+            "address": "0x50eb688799795b933A9F5FcFce8BD142a3d38D0C",
+            "perPayment": "40",
+            "daily": "100",
+            "remainingToday": "100"
+          },
+          {
+            "token": "QOR",
+            "address": "0x0000000000000000000000000000000000000000",
+            "perPayment": "1",
+            "daily": "2",
+            "remainingToday": "1.5"
+          },
+          {
+            "token": "WQOR",
+            "address": "0xEf4579c0fD85B49a543E5A55Bad760e6b859E8F7",
+            "perPayment": "1",
+            "daily": "2",
+            "remainingToday": "2"
+          },
+          {
+            "token": "VUSD",
+            "address": "0x2F9db08F65f880Eb00A462EA1a98B55144470297",
+            "perPayment": "50",
+            "daily": "100",
+            "remainingToday": "100"
+          },
+          {
+            "token": "ETHX",
+            "address": "0x45ef0a5928b5FaE099970315a9B1fdd3753028e4",
+            "perPayment": "0",
+            "daily": "0",
+            "remainingToday": "0"
+          }
+        ],
+        "recipients": [],
+        "routes": [
+          {
+            "kind": "swap",
+            "adapter": "0xDf0C745e0452fce3D6B9D8AA65f9b5440939c6e7",
+            "target": "0x813180918e1fA057A611206112C3091754a7265c",
+            "from": "USD",
+            "to": "ETHX",
+            "minOutPerIn": "0.00049"
+          },
+          {
+            "kind": "swap",
+            "adapter": "0xDf0C745e0452fce3D6B9D8AA65f9b5440939c6e7",
+            "target": "0xbF9e2189D1421B88B58Ea286BF0EEC052Bf79Ff4",
+            "from": "USD",
+            "to": "ETHX",
+            "minOutPerIn": "0.00049"
+          },
+          {
+            "kind": "wrap",
+            "adapter": "0x6b2b670408D2AE86199a25246E3E70848EE54865",
+            "target": "0xEf4579c0fD85B49a543E5A55Bad760e6b859E8F7",
+            "from": "QOR",
+            "to": "WQOR",
+            "minOutPerIn": "1"
+          },
+          {
+            "kind": "unwrap",
+            "adapter": "0x6b2b670408D2AE86199a25246E3E70848EE54865",
+            "target": "0xEf4579c0fD85B49a543E5A55Bad760e6b859E8F7",
+            "from": "WQOR",
+            "to": "QOR",
+            "minOutPerIn": "1"
+          },
+          {
+            "kind": "deposit",
+            "adapter": "0x93C687e94d5f2CAd1578CA1179cb560da7710FCd",
+            "target": "0x2F9db08F65f880Eb00A462EA1a98B55144470297",
+            "from": "USD",
+            "to": "VUSD",
+            "minOutPerIn": "0.99"
+          },
+          {
+            "kind": "redeem",
+            "adapter": "0x93C687e94d5f2CAd1578CA1179cb560da7710FCd",
+            "target": "0x2F9db08F65f880Eb00A462EA1a98B55144470297",
+            "from": "VUSD",
+            "to": "USD",
+            "minOutPerIn": "0.99"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "leash_routes",
+      "args": {},
+      "isError": false,
+      "result": [
+        {
+          "kind": "swap",
+          "adapter": "0xDf0C745e0452fce3D6B9D8AA65f9b5440939c6e7",
+          "target": "0x813180918e1fA057A611206112C3091754a7265c",
+          "from": "USD",
+          "to": "ETHX",
+          "minOutPerIn": "0.00049"
+        },
+        {
+          "kind": "swap",
+          "adapter": "0xDf0C745e0452fce3D6B9D8AA65f9b5440939c6e7",
+          "target": "0xbF9e2189D1421B88B58Ea286BF0EEC052Bf79Ff4",
+          "from": "USD",
+          "to": "ETHX",
+          "minOutPerIn": "0.00049"
+        },
+        {
+          "kind": "wrap",
+          "adapter": "0x6b2b670408D2AE86199a25246E3E70848EE54865",
+          "target": "0xEf4579c0fD85B49a543E5A55Bad760e6b859E8F7",
+          "from": "QOR",
+          "to": "WQOR",
+          "minOutPerIn": "1"
+        },
+        {
+          "kind": "unwrap",
+          "adapter": "0x6b2b670408D2AE86199a25246E3E70848EE54865",
+          "target": "0xEf4579c0fD85B49a543E5A55Bad760e6b859E8F7",
+          "from": "WQOR",
+          "to": "QOR",
+          "minOutPerIn": "1"
+        },
+        {
+          "kind": "deposit",
+          "adapter": "0x93C687e94d5f2CAd1578CA1179cb560da7710FCd",
+          "target": "0x2F9db08F65f880Eb00A462EA1a98B55144470297",
+          "from": "USD",
+          "to": "VUSD",
+          "minOutPerIn": "0.99"
+        },
+        {
+          "kind": "redeem",
+          "adapter": "0x93C687e94d5f2CAd1578CA1179cb560da7710FCd",
+          "target": "0x2F9db08F65f880Eb00A462EA1a98B55144470297",
+          "from": "VUSD",
+          "to": "USD",
+          "minOutPerIn": "0.99"
+        }
+      ]
+    },
+    {
+      "tool": "leash_swap",
+      "args": {
+        "tokenIn": "USD",
+        "tokenOut": "ETHX",
+        "amount": "10"
+      },
+      "isError": true,
+      "result": "More than one route for USD to ETHX: 0x813180918e1fA057A611206112C3091754a7265c, 0xbF9e2189D1421B88B58Ea286BF0EEC052Bf79Ff4. Say which target."
+    },
+    {
+      "tool": "leash_swap",
+      "args": {
+        "tokenIn": "USD",
+        "tokenOut": "ETHX",
+        "amount": "10",
+        "router": "0x813180918e1fa057a611206112c3091754a7265c"
+      },
+      "isError": false,
+      "result": {
+        "sent": false,
+        "allowed": true,
+        "kind": "swap",
+        "spend": "10 USD",
+        "expectedReceive": "0.005 ETHX",
+        "router": "0x813180918e1fA057A611206112C3091754a7265c",
+        "note": "Simulation passed. Call again with confirm=true to send."
+      }
+    },
+    {
+      "tool": "leash_swap",
+      "args": {
+        "tokenIn": "USD",
+        "tokenOut": "ETHX",
+        "amount": "10",
+        "router": "0x813180918e1fa057a611206112c3091754a7265c",
+        "confirm": true
+      },
+      "isError": false,
+      "result": {
+        "sent": true,
+        "txHash": "0x20a6e7d22f16f423bdbf696d35e47a53e1a4d6a68513fd1d7d5ea70b456be161",
+        "block": "10424167",
+        "kind": "swap",
+        "spend": "10 USD",
+        "expectedReceive": "0.005 ETHX",
+        "router": "0x813180918e1fA057A611206112C3091754a7265c",
+        "received": "0.005 ETHX"
+      }
+    },
+    {
+      "tool": "leash_wrap",
+      "args": {
+        "amount": "0.5",
+        "confirm": true
+      },
+      "isError": false,
+      "result": {
+        "sent": true,
+        "txHash": "0x17b3a39a6c4fc2db6d73b7a346e48387b711548c340c1ccb6bc57c1a37e3db8d",
+        "block": "10424168",
+        "kind": "wrap",
+        "spend": "0.5 QOR",
+        "expectedReceive": "0.5 WQOR",
+        "received": "0.5 WQOR"
+      }
+    },
+    {
+      "tool": "leash_swap",
+      "args": {
+        "tokenIn": "USD",
+        "tokenOut": "ETHX",
+        "amount": "90",
+        "router": "0x813180918e1fa057a611206112c3091754a7265c"
+      },
+      "isError": false,
+      "result": {
+        "sent": false,
+        "refusedBy": "OverPerTxLimit",
+        "note": "The guard would refuse this action. Do not look for a way around it; ask the owner for a new mandate.",
+        "router": "0x813180918e1fA057A611206112C3091754a7265c"
+      }
+    },
+    {
+      "tool": "leash_swap",
+      "args": {
+        "tokenIn": "USD",
+        "tokenOut": "ETHX",
+        "amount": "10",
+        "router": "0xd3ab3bc6a6e3c8dc214242f32216e6cc2cdeee48"
+      },
+      "isError": true,
+      "result": "No route for USD to ETHX. Ask the owner to add it to the mandate (leash_loosen_prepare)."
+    },
+    {
+      "tool": "leash_monitor",
+      "args": {},
+      "isError": false,
+      "result": {
+        "block": "10424168",
+        "frozen": false,
+        "alerts": [
+          {
+            "severity": "warn",
+            "code": "large-action",
+            "message": "A single action of QOR used 50% of the daily cap."
+          },
+          {
+            "severity": "info",
+            "code": "freeze-event",
+            "message": "A freeze was recorded in this window."
+          }
+        ],
+        "recentActions": 9,
+        "lookbackBlocks": 500
+      }
+    }
+  ]
+}

@@ -16,6 +16,14 @@ Leash was built with Claude Code (Claude Sonnet 5.5) working alongside the autho
 - An edit to the testnet script dropped the last lines, so a command ran silently with exit code 0. Found because the output was empty; fixed and rerun.
 - The first full testnet run stopped on a transient network error after deploying and arming the guard. The drill was made resumable so the guard was not redeployed.
 
+- While building v2, one of the contract mutation checks (leaving an approval open after a call) survived the first test suite, because the mock router consumed the whole approval. Found by running the mutation; fixed by adding a router that pulls less than approved. A test token with no code made several happy-path tests fail for the wrong reason, found by reading the revert.
+- The first live testnet run of the swap drill showed a FAIL row: the router itself refused an under-delivering swap before the guard's own rate-floor check could, so the row did not test what its name said. Fixed by having the simulated attacker set the minimum output to zero.
+
+## What the AI did for v2
+- Designed LeashGuardV2 (routes, measured value flows, rate floors), the adapters, the plain-English flow grammar, the monitor rules and the MCP execution tools, and ran them: 25 more contract tests, six mutation checks, a local drill, an MCP end-to-end test and a live testnet run.
+- Research on QoreChain's bridge, AMM, payment features and agent harness formats was delegated to a Claude Opus sub-agent working read-only from public documentation; its findings (no live bridge route, native AMM not callable from a contract) shaped what is and is not claimed.
+- The author decided to extend the project, and every action on accounts and funds.
+
 ## How the work is verified
 The AI's claims are not trusted. They are checked by 21 contract tests (including a fuzz test), 10 compiler tests, a local end-to-end drill, a mutation check that breaks the contract three ways and confirms the drill fails each time, and a run on the real testnet with a genuine ML-DSA-87 signature.
 

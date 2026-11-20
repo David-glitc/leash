@@ -1,0 +1,22 @@
+{
+  "guard": "0x6781ab2c589469ab91790d1a40a7de1f6d5135eb",
+  "otherGuard": "0x3782f92fa64122dfed9e37ccae634b2b72da43e0",
+  "adapters": {
+    "univ2": "0xdf0c745e0452fce3d6b9d8aa65f9b5440939c6e7",
+    "wrap": "0x6b2b670408d2ae86199a25246e3e70848ee54865",
+    "erc4626": "0x93c687e94d5f2cad1578ca1179cb560da7710fcd"
+  },
+  "tokens": {
+    "USD": "0x50eb688799795b933a9f5fcfce8bd142a3d38d0c",
+    "ETHX": "0x45ef0a5928b5fae099970315a9b1fdd3753028e4",
+    "WQOR": "0xef4579c0fd85b49a543e5a55bad760e6b859e8f7",
+    "VUSD": "0x2f9db08f65f880eb00a462ea1a98b55144470297"
+  },
+  "router": "0x813180918e1fa057a611206112c3091754a7265c",
+  "shortRouter": "0xbf9e2189d1421b88b58ea286bf0eec052bf79ff4",
+  "unlistedRouter": "0xd3ab3bc6a6e3c8dc214242f32216e6cc2cdeee48",
+  "vault": "0x2f9db08f65f880eb00a462ea1a98b55144470297",
+  "deployTx": "0x0513ea2525ea27363f3c8a2259944d4fa6298cfe40e912cefadc23ac69b6d6d8",
+  "applyTx": "0x11cd9537e50d0878c9cddc2eab669050d33332b40347fd98df77387f83d93eec",
+  "sentence": "agent 0x3E137Aa22320c998405C917aa8A74d67fF23c705 up to 100 USD a day, at most 40 USD per payment, up to 2 QOR a day, at most 1 QOR per payment, up to 2 WQOR a day, at most 1 WQOR per payment, up to 100 VUSD a day, at most 50 VUSD per payment, swap USD for ETHX on 0x813180918e1fa057a611206112c3091754a7265c at no worse than 0.00049 ETHX per USD, swap USD for ETHX on 0xbf9e2189d1421b88b58ea286bf0eec052bf79ff4 at no worse than 0.00049 ETHX per USD, wrap QOR into WQOR on 0xef4579c0fd85b49a543e5a55bad760e6b859e8f7, unwrap WQOR to QOR on 0xef4579c0fd85b49a543e5a55bad760e6b859e8f7, deposit USD into vault 0x2f9db08f65f880eb00a462ea1a98b55144470297 as VUSD at no worse than 0.99 VUSD per USD, redeem VUSD from vault 0x2f9db08f65f880eb00a462ea1a98b55144470297 for USD at no worse than 0.99 USD per VUSD for 5 hours"
+}

@@ -1,0 +1,28 @@
+{
+  "sentence": "agent 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 up to 200 USD a day, at most 10 USD per payment, swap USD for ETHX on router 0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9 at no worse than 0.00049 ETHX per USD for 1 day",
+  "scenarios": [
+    {
+      "name": "burst of agent swaps",
+      "frozenByWatcher": true
+    },
+    {
+      "name": "unexplained outflow",
+      "frozenByWatcher": true
+    }
+  ],
+  "transcript": [
+    "Watcher armed (owner's classical key, freeze only). Baseline taken.\n",
+    "Day 1: the agent does one normal swap.",
+    "  -> no alerts (the swap is fully explained by the guard's own events)\n",
+    "Day 1, later: a leaked agent key fires swaps in a loop.",
+    "  alert  {\"block\":\"16\",\"severity\":\"crit\",\"code\":\"burst\",\"message\":\"5 or more guard actions within 60 seconds. An agent in a loop, or a leaked key being used fast.\",\"freeze\":true}",
+    "  alert  {\"block\":\"16\",\"severity\":\"crit\",\"code\":\"auto-frozen\",\"message\":\"The watcher froze the guard (0x252e3925be328a5a59582f5f3427de1c66ee547644a32709d4898707dd350122). Only a new owner-signed mandate can unfreeze it.\"}",
+    "  -> guard frozen by the watcher: true\n",
+    "  -> the agent's next call: IsFrozen\n",
+    "The owner reviews, then signs a fresh mandate with the post-quantum key (stubbed here). Guard re-armed.",
+    "\nDay 2: an exploit the contract's events do not explain. 4 QOR leave the guard with no Spent or Executed event.",
+    "  alert  {\"block\":\"19\",\"severity\":\"crit\",\"code\":\"unexplained-outflow\",\"message\":\"QOR balance fell by 4000000000000000000 (raw units) more than the guard's own events explain. Something moved funds without going through spend or execute.\",\"freeze\":true}",
+    "  alert  {\"block\":\"19\",\"severity\":\"crit\",\"code\":\"auto-frozen\",\"message\":\"The watcher froze the guard (0x389661730b903588752a4489d87bd180929393fd7efd6e446639d667b7a58042). Only a new owner-signed mandate can unfreeze it.\"}",
+    "  -> guard frozen by the watcher: true"
+  ]
+}

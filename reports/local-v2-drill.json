@@ -1,0 +1,148 @@
+{
+  "sentence": "agent 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 up to 100 USD a day, at most 40 USD per payment, swap USD for ETHX on router 0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9 at no worse than 0.00049 ETHX per USD, swap USD for ETHX on 0xdc64a140aa3e981100a9beca4e685f962f0cf6c9 at no worse than 0.00049 ETHX per USD for 3 days",
+  "tourSentence": "agent 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 up to 100 USD a day, up to 10 QOR a day, up to 10 WQOR a day, up to 100 VUSD a day, wrap QOR into WQOR on 0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0, unwrap WQOR to QOR on 0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0, deposit USD into vault 0x0165878a594ca255338adfa4d48449f69242eb8f as VUSD at no worse than 0.99 VUSD per USD, redeem VUSD from vault 0x0165878a594ca255338adfa4d48449f69242eb8f for USD at no worse than 0.99 USD per VUSD, swap USD for ETHX on 0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9 at no worse than 0.00049 ETHX per USD for 1 day",
+  "guard": "0x9a676e781a523b5d0c0e43731313a708cb607508",
+  "tour": [
+    {
+      "kind": "wrap",
+      "ok": true,
+      "tx": "0xf6d37b32a4f1a9b382433bf9647da3c81be01a6762e5395db8e6183c38979d49"
+    },
+    {
+      "kind": "unwrap",
+      "ok": true,
+      "tx": "0x8d6042086aebc298b2aac2d92721c568a54ef919d28eba5417fba6bd37aea7d4"
+    },
+    {
+      "kind": "deposit",
+      "ok": true,
+      "tx": "0x1a47b4db71207ef3f4921407d811621fbef2bdca2602e7172b224251b79c226e"
+    },
+    {
+      "kind": "redeem",
+      "ok": true,
+      "tx": "0x14b1ed8414da4e0abf5f8a3c9fbce1787b155b38412115d05a6658a73a2f67e7"
+    },
+    {
+      "kind": "swap",
+      "ok": true,
+      "tx": "0xc20c9b824342832fa5984e7ac796f7b9f30e49aa392e0c9099be17d67ad2bc95"
+    }
+  ],
+  "results": [
+    {
+      "attacker": "control",
+      "attempt": "legitimate swap inside the mandate, output to the guard",
+      "expected": "succeeds",
+      "outcome": "succeeded",
+      "pass": true,
+      "tx": "0x1994cb0d3a192151470e5b4d040d4f4ef0fce7465166538592f76e0e38de2bcc"
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "swap more than the per-action cap",
+      "expected": "blocked (OverPerTxLimit)",
+      "outcome": "blocked (OverPerTxLimit)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "swap and send the output to the attacker",
+      "expected": "blocked (OutputNotToGuard)",
+      "outcome": "blocked (OutputNotToGuard)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "swap on a router the owner did not allow",
+      "expected": "blocked (RouteNotAllowed)",
+      "outcome": "blocked (RouteNotAllowed)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "send arbitrary call data through the swap adapter",
+      "expected": "blocked (BadAction)",
+      "outcome": "blocked (BadAction)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "swap on an allowed router that under-delivers (rate floor)",
+      "expected": "blocked (BelowRateFloor)",
+      "outcome": "blocked (BelowRateFloor)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "keep swapping after the daily cap (16000000000000000000 left)",
+      "expected": "blocked (OverDailyLimit)",
+      "outcome": "blocked (OverDailyLimit)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "loosen the routes and caps with a forged post-quantum signature",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "loosen the rate floor with a signature for a different mandate",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "replay the owner's signature from a different guard",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "run a swap directly",
+      "expected": "blocked (NotAgent)",
+      "outcome": "blocked (NotAgent)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "grant itself looser routes (no post-quantum signature)",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "freeze the guard (the kill switch)",
+      "expected": "allowed (it can only stop things)",
+      "outcome": "allowed",
+      "pass": true,
+      "tx": "0x25428810b7450731496b919854501938adc55a4a55b62c43b15e213a59d4fbcd"
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "keep swapping after the freeze",
+      "expected": "blocked (IsFrozen)",
+      "outcome": "blocked (IsFrozen)",
+      "pass": true
+    },
+    {
+      "attacker": "owner key",
+      "attempt": "unfreeze with an old signature",
+      "expected": "blocked (BadPqcSignature)",
+      "outcome": "blocked (BadPqcSignature)",
+      "pass": true
+    },
+    {
+      "attacker": "agent key",
+      "attempt": "keep swapping after the mandate expired",
+      "expected": "blocked (Expired)",
+      "outcome": "blocked (Expired)",
+      "pass": true
+    }
+  ]
+}

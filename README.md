@@ -31,7 +31,9 @@ A mandate takes effect only when `LeashGuard` verifies an ML-DSA-87 signature on
 - `tools/attack.ts`: the **Q-Day drill**. It plays a leaked agent key and a leaked owner key against the guard.
 - `tools/testnet.ts`: the pipeline for the real testnet (register keys, open windows, deploy, sign and apply a mandate, run the drill).
 - `tools/local.ts`: the same flow on a local Anvil node with the precompiles stubbed, no wallet needed.
-- `mcp/`: an MCP server and agent skill so Hermes Agent, Claude Code, Cursor and others can pay through the guard. See [mcp/README.md](mcp/README.md).
+- `mcp/`: an MCP server and agent skill so Hermes Agent, Claude Code, Cursor and others can pay and act through the guard. See [mcp/README.md](mcp/README.md).
+- `src/LeashGuardV2.sol` and `src/adapters/`: **v2**, guarded on-chain actions. The agent can swap, wrap and deposit into a vault along routes the owner signed, with the owner's rate floor enforced on what the guard actually receives. See [docs/ACTIONS.md](docs/ACTIONS.md).
+- `tools/policy.ts` also reads **value flows in plain English** ("swap FUSD for FETH on 0x… at no worse than 0.0004 FETH per FUSD"), `tools/monitor.ts` watches a guard and can freeze it with a stop-only key, and `tools/actions.ts` builds the calls.
 
 ## Try it
 
@@ -40,8 +42,11 @@ Requires [Foundry](https://getfoundry.sh), Node 22 and pnpm.
 ```sh
 pnpm install
 forge install foundry-rs/forge-std --no-git
-pnpm test                 # 21 contract tests + 10 compiler tests
-pnpm demo:local           # the full flow and the drill on a local node
+pnpm test                 # 46 contract tests + 30 TypeScript tests (compiler, flow language, monitor rules)
+pnpm demo:local           # v1: payments, the full flow and the drill on a local node
+pnpm demo:local:v2        # v2: every adapter, then the drill for swaps, wraps and vaults (16 checks)
+pnpm demo:monitor         # the monitor catching a burst and an unexplained outflow, freezing with a stop-only key
+pnpm mcp:e2e              # an MCP client drives swaps, wraps and vaults through the server (24 checks)
 pnpm compile "agent 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 up to 3 QOR a day, at most 1 QOR per payment, only to 0x90F79bf6EB2c4f870365E785982E1f101E93b906 for 3 hours"
 ```
 
@@ -55,18 +60,24 @@ LEASH REFUSED
 
 ## Use it from an agent
 
-Leash ships an MCP server (`leash_status`, `leash_check`, `leash_pay`, `leash_freeze`, `leash_compile`, `leash_loosen_prepare`, `leash_drill_local`) and a skill. The agent holds only its own key; there is no tool that loosens a mandate. Setup for Hermes Agent, Claude Code and Cursor is in [mcp/README.md](mcp/README.md). Trading and bridging are not guarded yet, and the doc says why.
+Leash ships an MCP server and a skill. Payments: `leash_status`, `leash_check`, `leash_pay`, `leash_freeze`. Actions (LeashGuardV2): `leash_routes`, `leash_swap`, `leash_wrap`, `leash_unwrap`, `leash_vault_deposit`, `leash_vault_redeem`, `leash_execute`. Also `leash_compile`, `leash_loosen_prepare`, `leash_monitor` and `leash_drill_local`. The agent holds only its own key; there is no tool that loosens a mandate. Setup for Hermes Agent, Claude Code and Cursor is in [mcp/README.md](mcp/README.md). Bridging is not guarded because no bridge route is live, and the doc says why.
 
 ## What was proven, and where
 
 | Check | Result |
 |---|---|
-| Contract tests (Foundry, stubbed precompiles) | 21 of 21 pass, including a fuzz test that the agent never moves more than the daily cap |
-| Compiler tests | 10 of 10 pass |
+| Contract tests (Foundry, stubbed precompiles) | 46 of 46 pass: 21 for LeashGuard and 25 for LeashGuardV2 and its adapters, each with a fuzz test that the agent never moves more than the daily cap |
+| Compiler, flow-language and monitor tests | 30 of 30 pass |
+| **Mutation check, v2**: break the guard on purpose | The tests fail each time: no rate floor, output to anywhere, caps skipped, approval left open, native value unchecked, no route needed |
+| v2 drill, local node | 16 of 16 as expected, after a tour through all five adapter actions |
 | Q-Day drill, local node | 14 of 14 as expected |
 | **Mutation check**: break the guard on purpose | The drill fails each time: no per-payment cap (13/14), no post-quantum check (9/14), owner key allowed to spend (13/14) |
 | **Real testnet**: `applyMandate` with a real ML-DSA-87 signature | Accepted by the `pqcVerify` precompile |
 | **Real testnet**: Q-Day drill | 13 of 13 as expected |
+| **Real testnet, v2**: a LeashGuardV2 mandate with swap, wrap, vault routes | Accepted by `pqcVerify` with a real ML-DSA-87 signature (`0xd588cfa9…fd58bc`), guard [`0x6781ab2c…35eb`](https://explore.qore.network/address/0x6781ab2c589469ab91790d1a40a7de1f6d5135eb) |
+| **Real testnet, v2**: every adapter as a real transaction | wrap, unwrap, vault deposit, vault redeem and swap all succeeded |
+| **Real testnet, v2**: Q-Day drill for actions | 15 of 15 as expected ([`reports/testnet-v2-drill.json`](reports/testnet-v2-drill.json)) |
+| **Real testnet, v2**: an MCP client swaps and wraps through the guard | A 10 USD swap (`0x20a6e7d2…e161`) and a 0.5 QOR wrap succeeded; a 90 USD swap was refused by the chain (`OverPerTxLimit`); a router the owner did not allow has no route ([transcript](reports/mcp-live-demo-v2.json)) |
 | **Real testnet**: an MCP client pays through the guard | A 0.1 QOR payment succeeded; 5 QOR and an off-allowlist address were refused by the chain ([transcript](reports/mcp-live-demo.json)) |
 
 On the testnet, guard [`0xa0ebb5daf8229da498346f0c824276d126c2a34c`](https://explore.qore.network/address/0xa0ebb5daf8229da498346f0c824276d126c2a34c) was deployed in `0x1670f698…9669` and armed in `0x53d44e69…14ae`; full hashes are in [`reports/testnet-drill.json`](reports/testnet-drill.json). The drill ends by freezing the guard; `pnpm testnet rearm` later re-armed it with a second owner-signed ML-DSA-87 mandate (nonce 2) for the MCP demo.

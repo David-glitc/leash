@@ -2,7 +2,7 @@
  * leash.ts - command line.
  *
  *   pnpm compile "agent 0x… may spend up to 50 fUSD a day, at most 20 fUSD per payment, only to 0x… for 3 days"
- *       [--tokens tokens.json] [--guard 0x…] [--json]
+ *       [--tokens tokens.json] [--adapters adapters.json] [--guard 0x…] [--json]
  *
  * Prints the mandate, the on-chain plan, and every finding: errors (refused), warnings (defaults
  * applied) and gaps (what the chain does not enforce for this setup).
@@ -13,10 +13,12 @@ import { compile, describe, DEFAULT_TOKENS, type TokenRegistry } from "./policy.
 const args = process.argv.slice(2);
 const flag = (n: string) => { const i = args.indexOf(`--${n}`); return i >= 0 ? args[i + 1] : undefined; };
 const text = args.filter((a, i) => !a.startsWith("--") && !(i > 0 && args[i - 1]!.startsWith("--") && args[i - 1] !== "--json")).join(" ").trim();
-if (!text || args[0] === "compile" && !args[1]) { console.error('Usage: pnpm compile "agent 0x… may spend up to 50 fUSD a day … only to 0x… for 3 days" [--tokens tokens.json] [--guard 0x…] [--json]'); process.exit(1); }
+if (!text || args[0] === "compile" && !args[1]) { console.error('Usage: pnpm compile "agent 0x… may spend up to 50 fUSD a day … only to 0x… for 3 days" [--tokens tokens.json] [--adapters adapters.json] [--guard 0x…] [--json]'); process.exit(1); }
 const tf = flag("tokens");
 const tokens: TokenRegistry = { ...DEFAULT_TOKENS, ...(tf ? JSON.parse(readFileSync(tf, "utf8")) : {}) };
-const r = compile(text.replace(/^compile\s+/, ""), { tokens, guard: flag("guard") as `0x${string}` | undefined });
+const af = flag("adapters");
+const adapters = af ? JSON.parse(readFileSync(af, "utf8")) : undefined;
+const r = compile(text.replace(/^compile\s+/, ""), { tokens, adapters, guard: flag("guard") as `0x${string}` | undefined });
 
 if (args.includes("--json")) {
   console.log(JSON.stringify(r, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2));
