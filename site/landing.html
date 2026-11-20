@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leash: a spending leash for AI agents on QoreChain</title>
+<meta name="description" content="A classical key can only stop things. Starting or loosening anything needs a post-quantum signature, verified on chain. Pay, swap, wrap and use vaults through MCP. Testnet, open source.">
+<link rel="canonical" href="%%BASE%%/">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Leash: a spending leash for AI agents on QoreChain">
+<meta property="og:description" content="A classical key can only stop things. Loosening anything needs an ML-DSA-87 signature, verified on chain. Testnet, open source.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="%%BASE%%/">
+<meta property="og:image" content="%%BASE%%/assets/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="%%BASE%%/assets/cover.png">
+<meta name="color-scheme" content="light dark">
+<link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/landing.css">
+</head>
+<body class="lp">
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="announce"><a href="/docs/judges/">Built for QoreChain Build Before Q-Day &middot; Post-Quantum AI Agents &middot; verify every claim in five minutes <span aria-hidden="true">&rarr;</span></a></div>
+
+<header class="navwrap">
+  <div class="nav">
+    <a class="brand" href="/" aria-label="Leash home">
+      <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><rect x="17" y="4" width="11" height="11" rx="3" class="lg-sq"/><circle cx="9" cy="22" r="6" class="lg-ci"/><path d="M13.2 17.8 19 12.6" class="lg-ln"/></svg>
+      <span>Leash</span>
+    </a>
+    <nav class="links" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#build">Build</a>
+      <a href="#verify">Verify</a>
+      <a href="/docs/getting-started/">Docs</a>
+      <a href="/docs/judges/">For judges</a>
+    </nav>
+    <div class="actions">
+      <a class="pill ghost" href="%%GH%%">GitHub</a>
+      <a class="pill solid" href="/try/">Try it live</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="mesh" aria-hidden="true"></div>
+  <div class="dotfield l" aria-hidden="true"></div>
+  <div class="dotfield r" aria-hidden="true"></div>
+  <div class="hero-in">
+    <a class="eyebrow rise" href="/try/"><i class="live"></i>Live on the QoreChain testnet <b>22 of 22 checks pass</b> <span aria-hidden="true">&rarr;</span></a>
+    <h1 class="rise d1">Give your AI agent a leash <span class="acc blk">a quantum computer can&rsquo;t loosen.</span></h1>
+    <p class="lede rise d2">A classical key can only stop things. Starting or loosening anything needs an ML-DSA-87 signature, verified on chain. Pay, swap and use vaults from any agent through MCP.</p>
+    <div class="cta rise d3">
+      <a class="pill solid lg" href="/try/">Try it live</a>
+      <button class="pill outline lg copy" type="button" data-copy="git clone https://github.com/David-glitc/leash &amp;&amp; cd leash &amp;&amp; pnpm install &amp;&amp; pnpm verify" aria-label="Copy the verify command"><code><span class="pr">$</span> pnpm verify</code><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.8"/><path d="M10.5 5.5v-1.2a1.8 1.8 0 0 0-1.8-1.8H4.3a1.8 1.8 0 0 0-1.8 1.8v4.4a1.8 1.8 0 0 0 1.8 1.8h1.2"/></svg><span class="tip" aria-hidden="true">Copied</span></button>
+      <a class="pill plain lg" href="#demo">Watch the demo</a>
+    </div>
+
+    <div class="stage rise d4">
+      <div class="stage-ring"><div class="stage-frame"><div class="stage-card">
+        <div class="tabs" role="tablist" aria-label="Example leashes">
+          <button role="tab" aria-selected="true" data-p="0" type="button">Pay</button>
+          <button role="tab" aria-selected="false" data-p="1" type="button">Swap</button>
+          <button role="tab" aria-selected="false" data-p="2" type="button">Vault</button>
+          <button role="tab" aria-selected="false" data-p="3" type="button">Refused</button>
+          <span class="tabs-note">Edit it. The real compiler runs in your browser.</span>
+        </div>
+        <div class="field">
+          <textarea id="hx-in" rows="4" spellcheck="false" aria-label="Describe a leash in plain English">agent 0x3E137Aa22320c998405C917aa8A74d67fF23c705 up to 3 QOR a day, at most 1 QOR per payment, only to 0x794B8d53ddcF93c05D97134f15Dc905223accD3e for 3 hours</textarea>
+          <button id="hx-run" class="go" type="button" aria-label="Compile this leash"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+        </div>
+        <div id="hx-out" class="out" aria-live="polite">
+          <div class="out-head"><span class="badge ok">LEASH OK</span><span class="counts">compiles to a mandate the owner signs</span></div>
+          <p class="out-sum">3 QOR a day, 1 QOR per payment, one allowed recipient, 3 hours.</p>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- NUMBERS -->
+<section class="strip" aria-label="Verification numbers">
+  <div class="strip-in">
+    <a class="st" href="/docs/verification/"><b>15/15</b><span>Q-Day drill on the real testnet</span></a>
+    <a class="st" href="/try/#vf-run"><b>22/22</b><span>live checks, runnable in your browser</span></a>
+    <a class="st" href="/docs/verification/"><b>800 / 0</b><span>random attacks on the live guard / violations</span></a>
+    <a class="st" href="/docs/verification/"><b>98.9%</b><span>of 181 deliberate contract breaks caught</span></a>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="sec" id="demo">
+  <div class="sec-in">
+    <p class="kicker">Demo</p>
+    <h2>See it in three minutes.</h2>
+    <p class="sub">The three keys, guarded swaps and vaults, the proof on the live testnet, the attack drill and the MCP tools, in one walkthrough. Voiceover and captions.</p>
+    <div class="bezel video">
+      <video controls preload="metadata" poster="/assets/cover.png" src="%%VIDEO%%"></video>
+    </div>
+    <p class="cap">2:56 &middot; <a href="%%VIDEO%%">open the video file</a></p>
+  </div>
+</section>
+
+<!-- THREE KEYS -->
+<section class="sec" id="how">
+  <div class="sec-in">
+    <p class="kicker">How it works</p>
+    <h2>One rule. <span class="acc">Three keys.</span></h2>
+    <p class="sub">An AI agent that pays or trades holds a key, and today that key is classical. A limit means nothing if the same key can raise it. Leash splits the power so no single key can.</p>
+    <div class="keys">
+      <article class="key">
+        <header><span class="kdot a"></span><h3>The agent&rsquo;s key</h3><code>secp256k1</code></header>
+        <p class="can"><b>Can</b> spend and act inside the mandate: caps, an allowlist, an expiry, routes with rate floors.</p>
+        <p class="cannot"><b>Cannot</b> raise a cap, add a recipient or extend the expiry.</p>
+      </article>
+      <article class="key">
+        <header><span class="kdot s"></span><h3>The owner&rsquo;s classical key</h3><code>secp256k1</code></header>
+        <p class="can"><b>Can</b> freeze the guard, instantly.</p>
+        <p class="cannot"><b>Cannot</b> start or loosen anything. If it leaks, or a quantum computer breaks it, an attacker can pause the agent and nothing more.</p>
+      </article>
+      <article class="key">
+        <header><span class="kdot p"></span><h3>The owner&rsquo;s post-quantum key</h3><code>ML-DSA-87</code></header>
+        <p class="can"><b>Can</b> sign every mandate. QoreChain&rsquo;s <code>pqcVerify</code> precompile checks the signature on chain against the key the owner registered.</p>
+        <p class="cannot"><b>Never</b> held by the agent, and never used to spend.</p>
+      </article>
+    </div>
+    <div class="guardbar">
+      <div class="gb-top"><span class="gb-label">LeashGuard</span><span class="gb-sub">a contract on QoreChain that holds the funds and enforces the mandate</span></div>
+      <ul class="gb-pills"><li>per-action and daily caps</li><li>recipient allowlist</li><li>expiry</li><li>owner-signed routes</li><li>rate floors, measured on what it received</li><li>freeze</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- BUILD -->
+<section class="sec" id="build">
+  <div class="sec-in">
+    <p class="kicker">What it does</p>
+    <h2>Agents pay and act. <span class="acc">The chain keeps count.</span></h2>
+    <p class="sub">Version 1 lets an agent pay. Version 2 lets it swap, wrap and use vaults. The rule never changes: the agent never gets to loosen its own leash.</p>
+    <div class="bezel feat">
+      <div class="feat-list" role="tablist" aria-label="Features">
+        <button role="tab" aria-selected="true" data-f="0" type="button"><i>1</i><span><b>Pay inside a mandate</b><em>Caps, allowlist and expiry, enforced by the contract and not by the agent&rsquo;s good behaviour.</em></span></button>
+        <button role="tab" aria-selected="false" data-f="1" type="button"><i>2</i><span><b>Swap, wrap, vaults</b><em>Along routes the owner signed. The guard measures what it received and enforces the rate floor.</em></span></button>
+        <button role="tab" aria-selected="false" data-f="2" type="button"><i>3</i><span><b>Describe it in English</b><em>A deterministic compiler, not a model, turns a sentence into a mandate and lists the gaps.</em></span></button>
+        <button role="tab" aria-selected="false" data-f="3" type="button"><i>4</i><span><b>Plug into any agent</b><em>An MCP server with 15 tools and a skill for Hermes Agent, Claude Code and Cursor. No tool can loosen a mandate.</em></span></button>
+        <button role="tab" aria-selected="false" data-f="4" type="button"><i>5</i><span><b>Watch and freeze</b><em>Bursts and unexplained outflows trigger a freeze from a key that can only stop things.</em></span></button>
+      </div>
+      <div class="feat-view">
+        <div class="dotgrid" aria-hidden="true"></div>
+        <div class="codecard">
+          <div class="cc-bar"><i></i><i></i><i></i><span class="cc-chip" id="fv-chip">leash_pay &middot; real testnet transcript</span></div>
+          <pre class="cc-code" id="fv-code" tabindex="0"><span class="c">// An agent harness calls the MCP tool. The chain decides.</span>
+<span class="k">leash_pay</span> { token: <span class="s">"QOR"</span>, amount: <span class="s">"0.1"</span>, confirm: <span class="k">true</span> }
+<span class="ok">&#10003; sent</span>  block 10418904  tx 0x18f6dd9f&hellip;4550
+
+<span class="k">leash_check</span> { token: <span class="s">"QOR"</span>, amount: <span class="s">"5"</span> }
+<span class="no">&#10007; refused by the chain: OverPerTxLimit</span>
+
+<span class="k">leash_check</span> { to: <span class="s">"&lt;an address off the allowlist&gt;"</span> }
+<span class="no">&#10007; refused by the chain: RecipientNotAllowed</span></pre>
+          <div class="cc-foot"><code id="fv-foot">pnpm mcp:live</code><button class="iconbtn copy" type="button" data-copy="pnpm mcp:live" aria-label="Copy command"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.8"/><path d="M10.5 5.5v-1.2a1.8 1.8 0 0 0-1.8-1.8H4.3a1.8 1.8 0 0 0-1.8 1.8v4.4a1.8 1.8 0 0 0 1.8 1.8h1.2"/></svg><span class="tip" aria-hidden="true">Copied</span></button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFY -->
+<section class="sec" id="verify">
+  <div class="sec-in">
+    <p class="kicker">Proof, not promises</p>
+    <h2>Check every claim <span class="acc">on your own machine.</span></h2>
+    <p class="sub">One read-only command checks the live deployment: both guards, their deployed bytecode against this source, the real transactions and the drill reports. No keys. Nothing is sent.</p>
+    <div class="verify">
+      <div class="bezel big">
+        <div class="bignum"><span>22/22</span></div>
+        <p>read-only checks pass against the live QoreChain testnet.</p>
+        <a class="pill solid" href="/try/#vf-run">Run them in your browser</a>
+        <a class="pill plain" href="/docs/judges/">Judge&rsquo;s guide <span aria-hidden="true">&rarr;</span></a>
+      </div>
+      <div class="bezel term">
+        <div class="dotgrid" aria-hidden="true"></div>
+        <div class="codecard">
+          <div class="cc-bar"><i></i><i></i><i></i><span class="cc-chip">terminal</span></div>
+<pre class="cc-code" tabindex="0"><span class="pr">$</span> git clone https://github.com/David-glitc/leash &amp;&amp; cd leash
+<span class="pr">$</span> pnpm install
+<span class="pr">$</span> pnpm verify
+<span class="ok">PASS</span>  v2 guard: deployed code equals this source  <span class="c">10662 bytes, identical</span>
+<span class="ok">PASS</span>  v2: applyMandate with routes succeeded (a real ML-DSA-87 signature)
+<span class="ok">PASS</span>  v2: swap through the guard succeeded and emitted Executed
+<span class="ok">PASS</span>  MCP: leash_swap made by an MCP client succeeded
+<span class="ok">PASS</span>  reports/testnet-v2-drill.json: 15 of 15 rows as expected
+<span class="ok">PASS</span>  attack campaign report: zero violations  <span class="c">800 attacks, 138 accepted</span>
+<span class="ok">22 passed, 0 failed.</span></pre>
+          <div class="cc-foot"><code>read-only &middot; no keys</code><button class="iconbtn copy" type="button" data-copy="git clone https://github.com/David-glitc/leash &amp;&amp; cd leash &amp;&amp; pnpm install &amp;&amp; pnpm verify" aria-label="Copy commands"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.8"/><path d="M10.5 5.5v-1.2a1.8 1.8 0 0 0-1.8-1.8H4.3a1.8 1.8 0 0 0-1.8 1.8v4.4a1.8 1.8 0 0 0 1.8 1.8h1.2"/></svg><span class="tip" aria-hidden="true">Copied</span></button></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="lay-h">Eight layers. Every one reproducible.</h3>
+    <div class="layers">
+      <a href="/docs/verification/"><span>01</span><b>79</b><h4>Foundry tests</h4><p>Unit and fuzz tests for both guards and the adapters.</p></a>
+      <a href="/docs/verification/"><span>02</span><b>8</b><h4>Stateful invariants</h4><p>Each held over 15,360 random calls.</p></a>
+      <a href="/docs/verification/"><span>03</span><b>179/181</b><h4>Mutation testing</h4><p>The contracts broken 181 ways. The two survivors are equivalent changes.</p></a>
+      <a href="/docs/verification/"><span>04</span><b>0 high</b><h4>Static analysis</h4><p>Slither, with every medium finding triaged.</p></a>
+      <a href="/docs/verification/"><span>05</span><b>800 / 0</b><h4>Attack campaign</h4><p>Random hostile calls on the live guard, judged by an independent oracle.</p></a>
+      <a href="/docs/verification/"><span>06</span><b>15/15</b><h4>Q-Day drill</h4><p>A leaked agent key and a leaked owner key, on the real testnet.</p></a>
+      <a href="/try/"><span>07</span><b>22/22</b><h4>Live verification</h4><p>Read-only, and it runs in your browser.</p></a>
+      <a href="/docs/verification/"><span>08</span><b>6 txs</b><h4>Real transactions</h4><p>Five adapter actions and an MCP swap, each linked to the explorer.</p></a>
+    </div>
+  </div>
+</section>
+
+<!-- LIMITS -->
+<section class="sec" id="limits">
+  <div class="sec-in">
+    <p class="kicker">Honest limits</p>
+    <h2>What this is <span class="acc">not.</span></h2>
+    <div class="limits">
+      <ul>
+        <li><b>Testnet only.</b> <code>pqcVerify</code> is not active on mainnet yet.</li>
+        <li><b>Unaudited.</b> Small and heavily tested, with an <a href="/docs/audit-package/">audit package</a> ready, but not independently reviewed.</li>
+        <li><b>Our own test router.</b> QoreSwap&rsquo;s router address is not published, so the testnet run uses test contracts. Blocked rows of the testnet drill are simulated calls.</li>
+        <li><b>No price oracle.</b> A rate floor is the owner&rsquo;s own number.</li>
+        <li><b>No bridging.</b> No bridge route is live on QoreChain.</li>
+      </ul>
+      <p class="cap"><a href="/docs/threat-model/">Read the full threat model</a> &middot; <a href="/docs/faq/">FAQ</a> &middot; <a href="/docs/roadmap/">What mainnet needs</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="band">
+  <div class="mesh dark" aria-hidden="true"></div>
+  <div class="band-in">
+    <h2>Verify it before you trust it.</h2>
+    <p>Open source, Apache-2.0. Run the checks yourself, then give your agent a leash.</p>
+    <div class="cta c">
+      <a class="pill light lg" href="/try/">Try it live</a>
+      <a class="pill line lg" href="/docs/getting-started/">Get started</a>
+      <a class="pill line lg" href="%%GH%%">GitHub</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <div class="fb">
+      <a class="brand" href="/" aria-label="Leash home"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><rect x="17" y="4" width="11" height="11" rx="3" class="lg-sq"/><circle cx="9" cy="22" r="6" class="lg-ci"/><path d="M13.2 17.8 19 12.6" class="lg-ln"/></svg><span>Leash</span></a>
+      <p>A spending leash for AI agents on QoreChain. Open source, unaudited, testnet.</p>
+    </div>
+    <div><h5>Product</h5><a href="/try/">Try it live</a><a href="/docs/guarded-actions/">Guarded actions</a><a href="/docs/flow-language/">Flow language</a><a href="/docs/agents-mcp/">Agents and MCP</a></div>
+    <div><h5>Trust</h5><a href="/docs/verification/">How it is verified</a><a href="/docs/threat-model/">Threat model</a><a href="/docs/audit-package/">Audit package</a><a href="/docs/security/">Security</a></div>
+    <div><h5>Project</h5><a href="/docs/judges/">For judges</a><a href="/docs/roadmap/">Roadmap</a><a href="/docs/ai-usage/">AI usage</a><a href="%%GH%%">Source</a><a href="/llms.txt">llms.txt</a></div>
+  </div>
+  <p class="legal">Apache-2.0 &middot; Built for QoreChain Build Before Q-Day &middot; <a href="%%GH%%/blob/main/SECURITY.md">Report a vulnerability</a></p>
+</footer>
+
+<template id="fv-1"><span class="c">// Swap along an owner-signed route. The guard measures what it received.</span>
+<span class="k">leash_swap</span> { tokenIn: <span class="s">"USD"</span>, tokenOut: <span class="s">"ETHX"</span>, amount: <span class="s">"10"</span>, router: <span class="s">"0x8131&hellip;265c"</span> }
+<span class="ok">&#10003; simulation passed</span>  spend 10 USD, expect 0.005 ETHX
+<span class="ok">&#10003; sent</span>  block 10424167  tx 0x20a6e7d2&hellip;e161
+  received 0.005 ETHX  <span class="c">(owner's floor: 0.00049 ETHX per USD)</span>
+
+<span class="k">leash_swap</span> { amount: <span class="s">"90"</span> }
+<span class="no">&#10007; refused by the chain: OverPerTxLimit</span>
+
+<span class="k">leash_swap</span> { router: <span class="s">"0xd3ab&hellip;ee48"</span> }
+<span class="no">&#10007; No route for USD to ETHX. Ask the owner to add it to the mandate.</span></template>
+
+<template id="fv-2"><span class="c">// One sentence in. A mandate the owner signs, and the gaps, out.</span>
+agent <span class="s">0x3E13&hellip;c705</span> up to <span class="n">100</span> USD a day, at most <span class="n">40</span> USD per payment,
+swap USD for ETHX on <span class="s">0x8131&hellip;265c</span>
+at no worse than <span class="n">0.00049</span> ETHX per USD for 5 hours
+
+<span class="ok">LEASH OK</span>
+  <span class="w">[warning]</span> ETHX is listed to receive swap or vault output only.
+  <span class="g">[gap]</span> A rate floor is your own number. Nothing checks it against the market.
+  <span class="g">[gap]</span> A route trusts its target contract to honour the call.
+  <span class="g">[gap]</span> The daily cap is a fixed 24-hour bucket, not a rolling window.
+
+<span class="c">// Leave the rate floor out and it refuses:</span>
+<span class="no">LEASH REFUSED</span>
+  <span class="no">[error]</span> State a rate floor for the swap of USD: 'at no worse than &lt;amount&gt; ETHX per USD'.</template>
+
+<template id="fv-3"><span class="c"># ~/.hermes/config.yaml, then /reload-mcp</span>
+<span class="k">mcp_servers</span>:
+  <span class="k">leash</span>:
+    command: <span class="s">"/path/to/leash/node_modules/.bin/tsx"</span>
+    args: [<span class="s">"/path/to/leash/mcp/server.ts"</span>]
+    env:
+      LEASH_GUARD: <span class="s">"0xa0eb&hellip;2a34c"</span>
+      LEASH_AGENT_KEY: <span class="s">"0x&hellip;"</span>   <span class="c"># the agent's key only, never the owner's</span>
+
+<span class="c"># Also works with Claude Code, Cursor and OpenClaw. 15 tools; none of them loosens a mandate.</span></template>
+
+<template id="fv-4"><span class="c"># pnpm demo:monitor  (local node, stop-only key)</span>
+Watcher armed (owner's classical key, freeze only). Baseline taken.
+Day 1, later: a leaked agent key fires swaps in a loop.
+<span class="no">alert  crit  burst</span>  5 or more guard actions within 60 seconds.
+<span class="no">alert  crit  auto-frozen</span>  Only a new owner-signed mandate can unfreeze it.
+<span class="ok">&rarr;</span> the agent's next call: IsFrozen
+
+Day 2: 4 QOR leave the guard with no Spent or Executed event.
+<span class="no">alert  crit  unexplained-outflow</span>
+<span class="no">alert  crit  auto-frozen</span></template>
+
+<script src="/assets/leash-core.js" defer></script>
+<script src="/assets/landing.js" defer></script>
+</body>
+</html>

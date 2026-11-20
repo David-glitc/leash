@@ -88,39 +88,9 @@ def doc_page(i: int) -> str:
             + f'<div class="docs">{sidebar(slug)}<article>{body}{edit}<div class="pn">{prev}{nxt}</div></article></div>' + FOOT)
 
 def home() -> str:
-    cards = [
-        ("g", "The agent", "Spends and acts only inside a mandate the owner signed: caps, an allowlist, an expiry, and routes with rate floors."),
-        ("a", "The owner's classical key", "Can only freeze. If it leaks, or a quantum computer breaks it, an attacker can pause the agent, never grant it power."),
-        ("v", "The owner's ML-DSA-87 key", "Signs every mandate. QoreChain's pqcVerify precompile checks the signature on chain against the key the owner registered."),
-    ]
-    feats = [
-        ("Pay inside a mandate", "Per-payment and daily caps, a recipient allowlist and an expiry, enforced by the guard contract, not by the agent's good behaviour."),
-        ("Act, with the chain measuring", "Swap, wrap and use ERC-4626 vaults along owner-signed routes. The guard measures what it received and enforces the owner's rate floor."),
-        ("Describe flows in English", "\"swap FUSD for FETH on 0x... at no worse than 0.0004 FETH per FUSD\". A deterministic compiler, not a model, turns it into a mandate and lists the gaps."),
-        ("Use it from any agent", "An MCP server with 15 tools and a skill for Hermes Agent, Claude Code and Cursor. There is no tool that loosens a mandate."),
-        ("Watch and freeze", "A monitor flags bursts and unexplained outflows and can freeze the guard with a classical key that can only stop things."),
-        ("Attack itself", "The Q-Day drill plays a leaked agent key and a leaked owner key against the guard, on the real testnet and on a local node."),
-    ]
-    c1 = "".join(f'<div class="card"><h3 class="{c}">{html.escape(t)}</h3><p>{html.escape(d)}</p></div>' for c, t, d in cards)
-    c2 = "".join(f'<div class="card"><h3>{html.escape(t)}</h3><p>{html.escape(d)}</p></div>' for t, d in feats)
-    stats = [("15/15", "Q-Day drill on the real testnet"), ("22/22", "read-only checks in <code>pnpm verify</code>"), ("79 + 30", "contract and TypeScript tests, 8 invariants"), ("800/0", "random attacks on the live guard / violations")]
-    s = "".join(f'<div class="stat"><div class="n">{n}</div><div class="l">{l}</div></div>' for n, l in stats)
-    verify = "git clone https://github.com/David-glitc/leash &amp;&amp; cd leash\npnpm install\npnpm verify"
-    return (head("Leash: a spending leash for AI agents on QoreChain", "A classical key can only stop things. Starting or loosening anything needs a post-quantum signature, verified on chain. Pay, swap, wrap and use vaults through MCP. Testnet, open source.", "/") + header()
-    + f"""<main class="home"><section class="hero"><div class="tag">Post-Quantum AI Agents · Build Before Q-Day</div><h1>Leash</h1>
-<p class="lead">A spending leash for AI agents. <b>A classical key can only stop things.</b> Starting or loosening anything needs a post-quantum signature, checked on chain.</p>
-<div class="cta"><a class="btn pri" href="/try/">Try it live</a><a class="btn" href="#demo">Watch the demo</a><a class="btn" href="/docs/judges/">Judge's guide</a><a class="btn" href="/docs/getting-started/">Get started</a><a class="btn" href="{GH}">GitHub</a></div></section>
-<section id="demo"><div class="video"><video controls preload="metadata" poster="/assets/cover.png" src="{VIDEO}"></video></div><p class="cap">2:56 demo with voiceover and captions. <a href="{VIDEO}">Open the video</a>.</p></section>
-<h2 class="sec">One rule, three keys</h2><p class="sub">An AI agent that pays or trades holds a key, and today that key is classical. A limit means nothing if the same key can raise it.</p><div class="cards">{c1}</div>
-<h2 class="sec">What it does</h2><p class="sub">Version 1 lets an agent pay. Version 2 lets it act. The rule never changes.</p><div class="cards">{c2}</div>
-<h2 class="sec">Proof, not promises</h2><p class="sub">Real transactions on the QoreChain testnet (qorechain-diana): a real ML-DSA-87 signature accepted by <code>pqcVerify</code>, five adapter actions, and a swap made by an MCP client.</p><div class="stats">{s}</div>
-<h2 class="sec">Verify it yourself</h2><p class="sub">One read-only command checks the live deployment: both guards, their deployed bytecode against this source, the real transactions, and the drill reports. No keys, nothing is sent.</p>
-<div class="term" data-copy="git clone https://github.com/David-glitc/leash &amp;&amp; cd leash &amp;&amp; pnpm install &amp;&amp; pnpm verify"><span class="p">$</span> git clone https://github.com/David-glitc/leash &amp;&amp; cd leash<br><span class="p">$</span> pnpm install<br><span class="p">$</span> pnpm verify<br><span class="c">PASS  v2 guard: deployed code equals this source  10662 bytes, identical (immutables masked)<br>PASS  v2: swap through the guard succeeded and emitted Executed<br>22 passed, 0 failed.</span></div>
-<h2 class="sec">Honest limits</h2><div class="limits"><b>What this is not.</b><ul>
-<li><b>Testnet only.</b> <code>pqcVerify</code> is not active on mainnet yet.</li><li><b>Unaudited.</b> Small and heavily tested (<a href="/docs/audit-package/">audit package</a>), but not independently reviewed.</li>
-<li><b>Our own test router.</b> QoreSwap's router address is not published, so the testnet run uses test contracts. Blocked rows of the testnet drill are simulated calls.</li>
-<li><b>No price oracle.</b> A rate floor is the owner's own number.</li><li><b>No bridging.</b> No bridge route is live on QoreChain.</li></ul><p class="cap"><a href="/docs/threat-model/">Read the full threat model</a> · <a href="/docs/faq/">FAQ</a> · <a href="/docs/roadmap/">What mainnet needs</a></p></div>
-</main>""" + FOOT)
+    """The landing page is hand-authored HTML (site/landing.html); only the shared links are filled in here."""
+    t = (SITE / "landing.html").read_text()
+    return t.replace("%%BASE%%", BASE).replace("%%GH%%", GH).replace("%%VIDEO%%", VIDEO)
 
 def try_page() -> str:
     body = """<main class="home"><section class="hero" style="padding-bottom:10px"><div class="tag">Interactive</div><h1 style="font-size:clamp(44px,8vw,84px)">Try Leash</h1>
@@ -142,7 +112,8 @@ def try_page() -> str:
 def main():
     if DIST.exists(): shutil.rmtree(DIST)
     (DIST / "assets").mkdir(parents=True)
-    for f in ("site.css", "site.js", "favicon.svg", "try.js", "leash-core.js", "verify-data.json"): shutil.copy(SITE / "assets" / f, DIST / "assets" / f)
+    for f in ("site.css", "landing.css", "landing.js", "site.js", "favicon.svg", "try.js", "leash-core.js", "verify-data.json"): shutil.copy(SITE / "assets" / f, DIST / "assets" / f)
+    shutil.copytree(SITE / "assets" / "fonts", DIST / "assets" / "fonts")
     shutil.copy(ROOT / "cover.png", DIST / "assets" / "cover.png")
     (DIST / "index.html").write_text(home())
     (DIST / "try").mkdir(); (DIST / "try" / "index.html").write_text(try_page())
