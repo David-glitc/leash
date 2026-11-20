@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1" # weekly: re-check the live testnet deployment
+  workflow_dispatch:
+    inputs:
+      mutation:
+        description: "Also run the full mutation campaign (about 20 minutes)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    name: Contracts (Foundry)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Install forge-std
+        run: forge install foundry-rs/forge-std --no-git
+      - name: Build
+        run: forge build
+      - name: Tests, fuzz tests and invariants
+        run: forge test -vv
+
+  typescript:
+    name: TypeScript (compiler, monitor, MCP types)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge install foundry-rs/forge-std --no-git
+      - run: forge build
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests
+        run: npx tsx --test tools/*.test.ts
+      - name: Local end-to-end (Anvil, stubbed precompiles)
+        run: |
+          pnpm demo:local
+          pnpm demo:local:v2
+          pnpm demo:monitor
+          pnpm mcp:e2e
+
+  docs:
+    name: Docs site builds and links resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install markdown
+      - run: python3 site/build.py
+      - name: Check internal links
+        run: |
+          python3 - <<'PY'
+          import glob, os, re, sys
+          bad = []
+          for f in glob.glob("site/dist/**/*.html", recursive=True):
+              for h in re.findall(r'(?:href|src)="([^"]+)"', open(f).read()):
+                  if re.match(r"^(https?:|mailto:|#)", h): continue
+                  p = h.split("#")[0]
+                  if not p: continue
+                  t = ("site/dist" + p) if p.startswith("/") else os.path.join(os.path.dirname(f), p)
+                  if p.endswith("/"): t = os.path.join(t, "index.html")
+                  if not os.path.exists(t): bad.append((f, h))
+          print("broken links:", bad)
+          sys.exit(1 if bad else 0)
+          PY
+
+  testnet:
+    name: Live testnet deployment (read-only)
+    runs-on: ubuntu-latest
+    continue-on-error: true # the public RPC can be slow; this job reports, it does not gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge install foundry-rs/forge-std --no-git
+      - run: forge build
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: pnpm verify
+        run: pnpm verify
+
+  mutation:
+    name: Mutation testing
+    if: github.event_name == 'workflow_dispatch' && inputs.mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge install foundry-rs/forge-std --no-git
+      - run: python3 tools/mutate.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: reports/mutation.json

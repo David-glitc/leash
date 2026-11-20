@@ -1,0 +1,162 @@
+{
+  "tool": "slither",
+  "detectors": 81,
+  "contracts": 10,
+  "scope": "src/ (guards and adapters); lib, tests and mocks filtered",
+  "counts": {
+    "Medium": 2,
+    "Low": 10,
+    "Optimization": 5
+  },
+  "findings": [
+    {
+      "check": "unused-return",
+      "impact": "Medium",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuard.sol#149",
+        "src/LeashGuard.sol#155"
+      ]
+    },
+    {
+      "check": "unused-return",
+      "impact": "Medium",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuardV2.sol#211",
+        "src/LeashGuardV2.sol#217"
+      ]
+    },
+    {
+      "check": "missing-zero-check",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuardV2.sol#126",
+        "src/LeashGuardV2.sol#127"
+      ]
+    },
+    {
+      "check": "missing-zero-check",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuard.sol#90",
+        "src/LeashGuard.sol#91"
+      ]
+    },
+    {
+      "check": "calls-loop",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuardV2.sol#330",
+        "src/LeashGuardV2.sol#331"
+      ]
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuardV2.sol#293",
+        "src/LeashGuardV2.sol#296"
+      ]
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuardV2.sol#272",
+        "src/LeashGuardV2.sol#274"
+      ]
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuard.sol#192",
+        "src/LeashGuard.sol#194"
+      ]
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuard.sol#149",
+        "src/LeashGuard.sol#151"
+      ]
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuardV2.sol#211",
+        "src/LeashGuardV2.sol#213"
+      ]
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuard.sol#102",
+        "src/LeashGuard.sol#105",
+        "src/LeashGuard.sol#113"
+      ]
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "confidence": "Medium",
+      "where": [
+        "src/LeashGuardV2.sol#300",
+        "src/LeashGuardV2.sol#305"
+      ]
+    },
+    {
+      "check": "cache-array-length",
+      "impact": "Optimization",
+      "confidence": "High",
+      "where": [
+        "src/LeashGuard.sol#169"
+      ]
+    },
+    {
+      "check": "cache-array-length",
+      "impact": "Optimization",
+      "confidence": "High",
+      "where": [
+        "src/LeashGuardV2.sol#234"
+      ]
+    },
+    {
+      "check": "cache-array-length",
+      "impact": "Optimization",
+      "confidence": "High",
+      "where": [
+        "src/LeashGuardV2.sol#226"
+      ]
+    },
+    {
+      "check": "cache-array-length",
+      "impact": "Optimization",
+      "confidence": "High",
+      "where": [
+        "src/LeashGuardV2.sol#233"
+      ]
+    },
+    {
+      "check": "cache-array-length",
+      "impact": "Optimization",
+      "confidence": "High",
+      "where": [
+        "src/LeashGuard.sol#164"
+      ]
+    }
+  ]
+}

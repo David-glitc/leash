@@ -48,23 +48,18 @@ Solidity 0.8.28, optimizer on (200 runs), Foundry. No upgradeability, no proxies
 git clone https://github.com/David-glitc/leash && cd leash
 pnpm install
 forge install foundry-rs/forge-std --no-git
-forge test                         # 46 tests, including fuzz tests
+forge test                         # 79 tests: unit, fuzz and 8 stateful invariants
 pnpm test                          # plus 30 TypeScript tests
 pnpm verify                        # read-only check of the live testnet deployment
 ```
 
-### Mutation checks
+### Mutation testing
 
-We broke `LeashGuardV2.sol` on purpose, one line at a time, and ran the suite. Each break must make a test fail:
+`python3 tools/mutate.py` generates 181 mutants across the five contracts (deleted checks, flipped comparisons, swapped operators, removed `delete`s and events, changed constants, a removed modifier) and runs the whole suite against each in an isolated copy. **179 of 181 are killed (98.9%).** The two survivors are equivalent mutants (details in [VERIFICATION.md](VERIFICATION.md)). The first round killed 64.6%; the survivors exposed real gaps, which the current 79 tests close.
 
-| Break | Result |
-|---|---|
-| remove the rate-floor check | 3 tests fail |
-| allow the output to go to any address | 1 test fails |
-| skip charging the input against the caps | 3 tests fail |
-| leave the approval open after the call | 1 test fails (added after the first run showed this one surviving) |
-| do not check the native `value` | 1 test fails |
-| do not require a route | 3 tests fail |
+### Static analysis, attack campaign
+
+Slither: 0 high, 2 medium (triaged in [VERIFICATION.md](VERIFICATION.md)). `pnpm campaign` fires 800 random hostile calls at the live guard and checks every accepted call against an independent oracle: 0 violations.
 
 ## Deployed on qorechain-diana
 
@@ -80,8 +75,9 @@ We broke `LeashGuardV2.sol` on purpose, one line at a time, and ran the suite. E
 
 ## Test limits, plainly
 
+- Invariant I10 is now exercised with deliberately misbehaving mock tokens (a token whose balance falls during a call), in addition to being defence in depth.
+
 - The EVM tests use a **stand-in** for the precompiles (a signature is valid when it equals `keccak256("ok", pubkey, message)`). The real `pqcVerify` was exercised only on the testnet, by the live runs.
-- Invariant I10 cannot be triggered with the well-behaved mock tokens, so no test exercises it. It is defence in depth.
 - The fuzz test covers swaps and payments of one token against one cap; multi-token interactions are covered by example tests only.
 - No formal verification, no invariant-testing campaign beyond the fuzz test, no independent review.
 

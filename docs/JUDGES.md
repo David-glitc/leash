@@ -35,21 +35,24 @@ pnpm install
 pnpm verify
 ```
 
-`pnpm verify` is read-only and needs no keys. It reads the live testnet and checks:
+`pnpm verify` is read-only and needs no keys (22 checks). It reads the live testnet and checks:
 
 - both guards exist and their owner is the registered owner account;
 - the deployed v2 bytecode equals what this source compiles to (immutables masked);
 - the two `applyMandate` transactions (v1 and v2) succeeded, so `pqcVerify` accepted a real ML-DSA-87 signature;
 - the five adapter transactions (wrap, unwrap, vault deposit, vault redeem, swap) succeeded and each emitted the guard's `Executed` event;
 - the two MCP transactions (a swap and a wrap made by an MCP client) succeeded;
-- the drill reports are internally consistent (15 of 15 on testnet, 16 of 16 locally).
+- the drill reports are internally consistent (15 of 15 on testnet, 16 of 16 locally);
+- the attack-campaign report (800 random attacks, zero violations) and the mutation report (179 of 181 mutants killed) are present and consistent.
+
+See [How Leash is verified](VERIFICATION.md) for the eight layers and how to reproduce each.
 
 ## Run the tests and demos locally
 
 Needs [Foundry](https://getfoundry.sh), Node 22 and pnpm.
 
 ```sh
-pnpm test            # 46 contract tests + 30 TypeScript tests
+pnpm test            # 79 contract tests (incl. 8 invariants) + 30 TypeScript tests
 pnpm demo:local:v2   # every adapter, then the Q-Day drill for actions (16 checks)
 pnpm demo:monitor    # the monitor catches a burst and an unexplained outflow and freezes with a stop-only key
 pnpm mcp:e2e         # an MCP client drives swaps, wraps and vaults through the server (24 checks)
@@ -72,7 +75,7 @@ pnpm mcp:e2e         # an MCP client drives swaps, wraps and vaults through the 
 |---|---|
 | [src/LeashGuardV2.sol](../src/LeashGuardV2.sol) | The guard: payments, guarded actions, the freeze, the post-quantum-gated mandate |
 | [src/adapters/](../src/adapters) | Three stateless adapters: V2 router, wrapped native, ERC-4626 vault |
-| [test/LeashGuardV2.t.sol](../test/LeashGuardV2.t.sol) | 25 tests, a fuzz test, and the attacks |
+| [test/LeashGuardV2.t.sol](../test/LeashGuardV2.t.sol), [test/LeashInvariants.t.sol](../test/LeashInvariants.t.sol) | 42 tests, a fuzz test, and 8 stateful invariants |
 | [tools/policy.ts](../tools/policy.ts) | The plain-English compiler (a grammar, not a model) |
 | [tools/attack-v2.ts](../tools/attack-v2.ts) | The Q-Day drill: a leaked agent key and a leaked owner key |
 | [tools/monitor.ts](../tools/monitor.ts) | The monitor and its stop-only auto-freeze |

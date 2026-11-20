@@ -19,6 +19,7 @@ Built for QoreChain Developer Fest, "Build Before Q-Day", Post-Quantum AI Agents
 | [Guarded actions (v2)](docs/ACTIONS.md) | how the guard measures swaps, wraps and vaults |
 | [Flow language](docs/FLOW_LANGUAGE.md) | describe value flows in plain English |
 | [Agents and MCP](mcp/README.md) | Hermes Agent, Claude Code, Cursor |
+| [How it is verified](docs/VERIFICATION.md) | eight layers: tests, invariants, mutation testing, static analysis, an attack campaign on the live guard, live-chain verification |
 | [Threat model](docs/THREAT_MODEL.md) · [Audit package](docs/AUDIT_PACKAGE.md) · [Security](SECURITY.md) | what stops each attack, scope and invariants for an auditor, how to report |
 | [FAQ](docs/FAQ.md) · [Roadmap](docs/ROADMAP.md) | questions we expect, what mainnet needs |
 
@@ -58,12 +59,13 @@ Requires [Foundry](https://getfoundry.sh), Node 22 and pnpm.
 ```sh
 pnpm install
 forge install foundry-rs/forge-std --no-git
-pnpm test                 # 46 contract tests + 30 TypeScript tests (compiler, flow language, monitor rules)
+pnpm test                 # 79 contract tests (unit, fuzz, 8 invariants) + 30 TypeScript tests
 pnpm demo:local           # v1: payments, the full flow and the drill on a local node
 pnpm demo:local:v2        # v2: every adapter, then the drill for swaps, wraps and vaults (16 checks)
 pnpm demo:monitor         # the monitor catching a burst and an unexplained outflow, freezing with a stop-only key
 pnpm mcp:e2e              # an MCP client drives swaps, wraps and vaults through the server (24 checks)
-pnpm verify               # read-only check of the live testnet deployment (no keys): 20 checks
+pnpm verify               # read-only check of the live testnet deployment (no keys): 22 checks
+pnpm campaign             # 800 random hostile calls against the live guard, checked by an independent oracle
 pnpm compile "agent 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 up to 3 QOR a day, at most 1 QOR per payment, only to 0x90F79bf6EB2c4f870365E785982E1f101E93b906 for 3 hours"
 ```
 
@@ -83,9 +85,11 @@ Leash ships an MCP server and a skill. Payments: `leash_status`, `leash_check`, 
 
 | Check | Result |
 |---|---|
-| Contract tests (Foundry, stubbed precompiles) | 46 of 46 pass: 21 for LeashGuard and 25 for LeashGuardV2 and its adapters, each with a fuzz test that the agent never moves more than the daily cap |
+| Contract tests (Foundry, stubbed precompiles) | 79 of 79 pass: 29 for LeashGuard, 42 for LeashGuardV2 and its adapters, 8 stateful invariants (15,360 random calls each) |
 | Compiler, flow-language and monitor tests | 30 of 30 pass |
-| **Mutation check, v2**: break the guard on purpose | The tests fail each time: no rate floor, output to anywhere, caps skipped, approval left open, native value unchecked, no route needed |
+| **Automated mutation testing** (`tools/mutate.py`) | 179 of 181 mutants killed (98.9%); the 2 survivors are equivalent changes. The first round killed 64.6%, which exposed the gaps the 79 tests now close |
+| **Attack campaign on the live guard** (`pnpm campaign`) | 800 random hostile calls, 0 violations; 138 accepted, all inside the mandate |
+| **Static analysis** (Slither) | 0 high, 2 medium (triaged), see [VERIFICATION.md](docs/VERIFICATION.md) |
 | v2 drill, local node | 16 of 16 as expected, after a tour through all five adapter actions |
 | Q-Day drill, local node | 14 of 14 as expected |
 | **Mutation check**: break the guard on purpose | The drill fails each time: no per-payment cap (13/14), no post-quantum check (9/14), owner key allowed to spend (13/14) |

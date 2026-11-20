@@ -1,0 +1,52 @@
+{
+  "network": "qorechain-diana",
+  "guard": "0x6781ab2c589469ab91790d1a40a7de1f6d5135eb",
+  "attempts": 800,
+  "seed": 20261120,
+  "at": "2026-11-20T14:51:14.130Z",
+  "block": "10438729",
+  "accepted": 138,
+  "refused": 662,
+  "violations": 0,
+  "unexpectedRefusals": 22,
+  "unexpectedRefusalDetails": [
+    "swap (near-legitimate) refused: BelowRateFloor",
+    "vault redeem (near-legitimate) refused: ExecFailed",
+    "swap (near-legitimate) refused: ExecFailed"
+  ],
+  "byFunction": {
+    "freeze": {
+      "accepted": 73,
+      "refused": 36
+    },
+    "execute": {
+      "accepted": 65,
+      "refused": 287
+    },
+    "applyMandate": {
+      "accepted": 0,
+      "refused": 107
+    },
+    "spend": {
+      "accepted": 0,
+      "refused": 232
+    }
+  },
+  "refusedBy": {
+    "NotAgent": 271,
+    "NotOwnerOrAgent": 36,
+    "BadMandate": 69,
+    "OverPerTxLimit": 90,
+    "RecipientNotAllowed": 81,
+    "BelowRateFloor": 11,
+    "BadAction": 29,
+    "ZeroAmount": 12,
+    "OutputNotToGuard": 3,
+    "BadPqcSignature": 38,
+    "reverted without a reason": 7,
+    "ExecFailed": 11,
+    "RouteNotAllowed": 4
+  },
+  "violationDetails": [],
+  "note": "Calls are simulated with eth_call: nothing is sent and no state changes. An independent oracle checks every accepted call against the mandate."
+}

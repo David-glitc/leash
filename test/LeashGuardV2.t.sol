@@ -7,7 +7,10 @@ import {UniV2Adapter} from "../src/adapters/UniV2Adapter.sol";
 import {WrapAdapter} from "../src/adapters/WrapAdapter.sol";
 import {Erc4626Adapter} from "../src/adapters/Erc4626Adapter.sol";
 import {MockPqc} from "./LeashGuard.t.sol";
-import {MockERC20, MockWETH, MockRouterV2, MockVault, ReentrantTarget} from "./mocks/Mocks.sol";
+import {
+    MockERC20, MockWETH, MockRouterV2, MockVault, ReentrantTarget, MockKeyRegistry, FalseToken, NoReturnToken, RevertingToken,
+    ShrinkingToken, ShrinkTarget, MintTarget, RejectingRecipient, ReentrantAgent
+} from "./mocks/Mocks.sol";
 
 /// Reports a fixed flow, whatever the call data says. Stands in for an adapter for the reentrancy test.
 contract FixedFlowAdapter is ILeashAdapter {
@@ -24,7 +27,29 @@ contract FixedFlowAdapter is ILeashAdapter {
     }
 }
 
+/// Reports a configured flow whatever the call data says. Lets a test point a route at any target.
+contract FlowAdapter is ILeashAdapter {
+    address public tokenIn;
+    uint256 public amountIn;
+    address public tokenOut;
+    address public guardAddr;
+
+    constructor(address tokenIn_, uint256 amountIn_, address tokenOut_, address guard_) {
+        tokenIn = tokenIn_; amountIn = amountIn_; tokenOut = tokenOut_; guardAddr = guard_;
+    }
+
+    function inspect(address, bytes calldata, uint256) external view returns (Flow memory) {
+        return Flow(tokenIn, amountIn, tokenOut, guardAddr);
+    }
+}
+
 contract LeashGuardV2Test is Test {
+    event Spent(address indexed token, address indexed to, uint256 amount, uint256 spentToday);
+    event Executed(address indexed adapter, address indexed target, address tokenIn, uint256 amountIn, address tokenOut, uint256 received);
+    event Frozen(address indexed by);
+    event MandateApplied(uint256 indexed nonce, address indexed agent, uint64 expiry, bytes32 mandateHash);
+    event Deposited(address indexed from, uint256 amount);
+
     address constant PQC_VERIFY = 0x0000000000000000000000000000000000000a01;
     address constant PQC_KEYS = 0x0000000000000000000000000000000000000a02;
 
@@ -422,5 +447,331 @@ contract LeashGuardV2Test is Test {
         }
         vm.stopPrank();
         assertLe(moved, 300e18, "never more than the daily cap");
+    }
+
+    // ======================================================== hardening tests (written after the first mutation campaign)
+
+    function _etchRegistry() internal returns (MockKeyRegistry r) {
+        r = new MockKeyRegistry();
+        vm.etch(PQC_VERIFY, address(r).code);
+        vm.etch(PQC_KEYS, address(r).code);
+        r = MockKeyRegistry(PQC_KEYS);
+        r.set(true, true, hex"c0ffee");
+    }
+
+    function _plainMandate(address[] memory toks, LeashGuardV2.TokenLimit[] memory lims, address[] memory recips, LeashGuardV2.Route[] memory rts)
+        internal view returns (LeashGuardV2.Mandate memory m)
+    {
+        m.agent = agent; m.expiry = uint64(block.timestamp + 3 days); m.tokens = toks; m.limits = lims; m.recipients = recips; m.routes = rts;
+    }
+
+    function test_constantsAndInitialState() public view {
+        assertEq(guard.MAX_ITEMS(), 16);
+        assertEq(guard.DAY(), 1 days);
+        assertEq(guard.RATE_ONE(), 1e18);
+        assertTrue(guard.frozen(), "a new guard starts frozen");
+    }
+
+    function test_armingUnfreezes() public {
+        arm();
+        assertFalse(guard.frozen());
+    }
+
+    function test_depositEvents() public {
+        vm.recordLogs();
+        new LeashGuardV2(owner);
+        assertEq(vm.getRecordedLogs().length, 0, "no event when nothing is sent");
+        vm.expectEmit(true, false, false, true);
+        emit Deposited(address(this), 7 ether);
+        new LeashGuardV2{value: 7 ether}(owner);
+        vm.expectEmit(true, false, false, true);
+        emit Deposited(address(this), 1 ether);
+        (bool ok,) = address(guard).call{value: 1 ether}("");
+        assertTrue(ok);
+    }
+
+    function test_spendChecksRecipientAndTokenKind() public {
+        arm();
+        vm.startPrank(agent);
+        vm.expectRevert(LeashGuardV2.RecipientNotAllowed.selector);
+        guard.spend(address(usd), payable(mallory), 1e18);
+        vm.expectRevert(LeashGuardV2.TokenNotSpendable.selector); // ethx is receive-only
+        guard.spend(address(ethx), alice, 1);
+        vm.stopPrank();
+    }
+
+    function test_capBoundariesAreInclusive() public {
+        arm();
+        vm.startPrank(agent);
+        guard.spend(address(usd), alice, 100e18); // exactly the per-action cap
+        guard.spend(address(usd), alice, 100e18);
+        guard.spend(address(usd), alice, 100e18); // exactly the daily cap
+        assertEq(guard.remainingToday(address(usd)), 0);
+        vm.expectRevert(LeashGuardV2.OverDailyLimit.selector);
+        guard.spend(address(usd), alice, 1);
+        vm.stopPrank();
+    }
+
+    function test_bucketRollsOverExactlyAtOneDay() public {
+        arm();
+        vm.prank(agent);
+        guard.spend(address(usd), alice, 100e18);
+        uint256 t0 = block.timestamp;
+        vm.warp(t0 + 1 days - 1);
+        assertEq(guard.remainingToday(address(usd)), 200e18, "still the same bucket one second early");
+        vm.prank(agent);
+        guard.spend(address(usd), alice, 100e18);
+        vm.warp(t0 + 1 days);
+        assertEq(guard.remainingToday(address(usd)), 300e18, "a fresh bucket at exactly one day");
+        vm.startPrank(agent);
+        guard.spend(address(usd), alice, 100e18);
+        guard.spend(address(usd), alice, 100e18);
+        guard.spend(address(usd), alice, 100e18);
+        vm.stopPrank();
+    }
+
+    function test_eventsAreEmitted() public {
+        LeashGuardV2.Mandate memory m = mandate();
+        bytes memory sg = sig(m, 0);
+        vm.expectEmit(true, true, false, true);
+        emit MandateApplied(0, agent, m.expiry, keccak256(abi.encode(m)));
+        guard.applyMandate(m, sg);
+
+        vm.expectEmit(true, true, false, true);
+        emit Spent(address(usd), alice, 10e18, 10e18);
+        vm.prank(agent);
+        guard.spend(address(usd), alice, 10e18);
+
+        bytes memory data = swapUsdForEthx(20e18, address(guard));
+        vm.expectEmit(true, true, false, true);
+        emit Executed(address(swapAd), address(router), address(usd), 20e18, address(ethx), 0.01e18);
+        vm.prank(agent);
+        guard.execute(address(swapAd), address(router), data, 0);
+
+        vm.expectEmit(true, false, false, true);
+        emit Frozen(owner);
+        vm.prank(owner);
+        guard.freeze();
+    }
+
+    function test_reapplyingClearsTheOldMandateCompletely() public {
+        arm();
+        vm.prank(agent);
+        guard.spend(address(usd), alice, 50e18);
+        assertGt(guard.spentInBucket(address(usd)), 0);
+        assertGt(guard.bucketStart(address(usd)), 0);
+        address[] memory toks = new address[](1);
+        LeashGuardV2.TokenLimit[] memory lims = new LeashGuardV2.TokenLimit[](1);
+        toks[0] = address(0);
+        lims[0] = LeashGuardV2.TokenLimit(1 ether, 3 ether);
+        address[] memory recips = new address[](1);
+        recips[0] = mallory; // a different payee
+        LeashGuardV2.Mandate memory m2 = _plainMandate(toks, lims, recips, new LeashGuardV2.Route[](0));
+        guard.applyMandate(m2, sig(m2, 1));
+        (uint128 perTx, uint128 daily) = guard.limitOf(address(usd));
+        assertEq(perTx, 0); assertEq(daily, 0);
+        assertFalse(guard.listed(address(usd)));
+        assertEq(guard.spentInBucket(address(usd)), 0);
+        assertEq(guard.bucketStart(address(usd)), 0);
+        assertFalse(guard.allowedRecipient(alice));
+        assertTrue(guard.allowedRecipient(mallory));
+        assertEq(guard.tokens().length, 1);
+        assertEq(guard.recipients().length, 1);
+        assertEq(guard.routes().length, 0);
+    }
+
+    function test_mandateSizeAndExpiryBoundaries() public {
+        // expiry exactly now is refused
+        LeashGuardV2.Mandate memory m = mandate();
+        m.expiry = uint64(block.timestamp);
+        bytes memory s0 = sig(m, 0);
+        vm.expectRevert(LeashGuardV2.BadMandate.selector);
+        guard.applyMandate(m, s0);
+
+        // 16 tokens are fine, 17 are not
+        for (uint256 n = 16; n <= 17; ++n) {
+            address[] memory toks = new address[](n);
+            LeashGuardV2.TokenLimit[] memory lims = new LeashGuardV2.TokenLimit[](n);
+            for (uint256 i; i < n; ++i) { toks[i] = address(uint160(0x1000 + i)); }
+            LeashGuardV2.Mandate memory t = _plainMandate(toks, lims, new address[](0), new LeashGuardV2.Route[](0));
+            bytes memory sg = sig(t, guard.nonce());
+            if (n == 17) { vm.expectRevert(LeashGuardV2.BadMandate.selector); }
+            guard.applyMandate(t, sg);
+        }
+        // 16 recipients are fine, 17 are not
+        for (uint256 n = 16; n <= 17; ++n) {
+            address[] memory rec = new address[](n);
+            for (uint256 i; i < n; ++i) { rec[i] = address(uint160(0x2000 + i)); }
+            LeashGuardV2.Mandate memory r = _plainMandate(new address[](0), new LeashGuardV2.TokenLimit[](0), rec, new LeashGuardV2.Route[](0));
+            bytes memory sg = sig(r, guard.nonce());
+            if (n == 17) { vm.expectRevert(LeashGuardV2.BadMandate.selector); }
+            guard.applyMandate(r, sg);
+        }
+        // 16 routes are fine, 17 are not
+        for (uint256 n = 16; n <= 17; ++n) {
+            address[] memory toks = new address[](2);
+            LeashGuardV2.TokenLimit[] memory lims = new LeashGuardV2.TokenLimit[](2);
+            toks[0] = address(usd); lims[0] = LeashGuardV2.TokenLimit(10e18, 100e18);
+            toks[1] = address(ethx);
+            LeashGuardV2.Route[] memory rts = new LeashGuardV2.Route[](n);
+            for (uint256 i; i < n; ++i) { rts[i] = route(address(swapAd), address(uint160(0x3000 + i)), address(usd), address(ethx), 1); }
+            LeashGuardV2.Mandate memory q = _plainMandate(toks, lims, new address[](0), rts);
+            bytes memory sg = sig(q, guard.nonce());
+            if (n == 17) { vm.expectRevert(LeashGuardV2.BadMandate.selector); }
+            guard.applyMandate(q, sg);
+        }
+    }
+
+    function test_ownerKeyChecksAreIndependent() public {
+        MockKeyRegistry reg = _etchRegistry();
+        LeashGuardV2.Mandate memory m = mandate();
+        bytes memory sg = sig(m, 0);
+
+        reg.set(false, true, hex"c0ffee"); // not registered, even though a key is reported
+        vm.expectRevert(LeashGuardV2.OwnerKeyNotRegistered.selector);
+        guard.applyMandate(m, sg);
+
+        reg.set(true, true, hex""); // registered but no key bytes
+        vm.expectRevert(LeashGuardV2.OwnerKeyNotRegistered.selector);
+        guard.applyMandate(m, sg);
+
+        reg.set(true, false, hex"c0ffee"); // possession not proven
+        vm.expectRevert(LeashGuardV2.OwnerKeyNotProven.selector);
+        guard.applyMandate(m, sg);
+
+        reg.set(true, true, hex"c0ffee");
+        guard.applyMandate(m, sg); // and it works when everything is in order
+        assertFalse(guard.frozen());
+    }
+
+    function test_theLockStopsAnAgentThatIsAContract() public {
+        ReentrantAgent bot = new ReentrantAgent();
+        bot.setGuard(address(guard));
+        address[] memory toks = new address[](1);
+        LeashGuardV2.TokenLimit[] memory lims = new LeashGuardV2.TokenLimit[](1);
+        toks[0] = address(0); lims[0] = LeashGuardV2.TokenLimit(1 ether, 3 ether);
+        address[] memory recips = new address[](1);
+        recips[0] = address(bot);
+        LeashGuardV2.Mandate memory m = _plainMandate(toks, lims, recips, new LeashGuardV2.Route[](0));
+        m.agent = address(bot);
+        guard.applyMandate(m, sig(m, 0));
+        bot.pay(address(0), address(bot), 1);
+        assertTrue(bot.tried());
+        assertEq(bot.sawError(), LeashGuardV2.Reentrancy.selector, "the nested spend must hit the lock");
+    }
+
+    function test_failedTransfersAreReported() public {
+        FalseToken falseTok = new FalseToken();
+        NoReturnToken noRet = new NoReturnToken();
+        RevertingToken revTok = new RevertingToken();
+        RejectingRecipient bad = new RejectingRecipient();
+        falseTok.mint(address(guard), 100); noRet.mint(address(guard), 100); revTok.mint(address(guard), 100);
+        address[] memory toks = new address[](4);
+        LeashGuardV2.TokenLimit[] memory lims = new LeashGuardV2.TokenLimit[](4);
+        toks[0] = address(0); toks[1] = address(falseTok); toks[2] = address(noRet); toks[3] = address(revTok);
+        for (uint256 i; i < 4; ++i) lims[i] = LeashGuardV2.TokenLimit(50 ether, 90 ether);
+        address[] memory recips = new address[](2);
+        recips[0] = alice; recips[1] = address(bad);
+        LeashGuardV2.Mandate memory m = _plainMandate(toks, lims, recips, new LeashGuardV2.Route[](0));
+        guard.applyMandate(m, sig(m, 0));
+        vm.startPrank(agent);
+        vm.expectRevert(LeashGuardV2.TransferFailed.selector);
+        guard.spend(address(0), payable(address(bad)), 1);
+        vm.expectRevert(LeashGuardV2.TransferFailed.selector);
+        guard.spend(address(falseTok), alice, 1);
+        vm.expectRevert(LeashGuardV2.TransferFailed.selector);
+        guard.spend(address(revTok), alice, 1);
+        guard.spend(address(noRet), alice, 7); // a token that returns nothing is fine
+        vm.stopPrank();
+        assertEq(noRet.balanceOf(alice), 7);
+    }
+
+    function test_approveFailureModes() public {
+        FalseToken falseTok = new FalseToken();
+        NoReturnToken noRet = new NoReturnToken();
+        RevertingToken revTok = new RevertingToken();
+        MintTarget target = new MintTarget();
+        FlowAdapter aFalse = new FlowAdapter(address(falseTok), 10, address(ethx), address(guard));
+        FlowAdapter aNoRet = new FlowAdapter(address(noRet), 10, address(ethx), address(guard));
+        FlowAdapter aRev = new FlowAdapter(address(revTok), 10, address(ethx), address(guard));
+        address[] memory toks = new address[](4);
+        LeashGuardV2.TokenLimit[] memory lims = new LeashGuardV2.TokenLimit[](4);
+        toks[0] = address(falseTok); toks[1] = address(noRet); toks[2] = address(revTok); toks[3] = address(ethx);
+        for (uint256 i; i < 3; ++i) lims[i] = LeashGuardV2.TokenLimit(100, 1000);
+        LeashGuardV2.Route[] memory rts = new LeashGuardV2.Route[](3);
+        rts[0] = route(address(aFalse), address(target), address(falseTok), address(ethx), 1);
+        rts[1] = route(address(aNoRet), address(target), address(noRet), address(ethx), 1);
+        rts[2] = route(address(aRev), address(target), address(revTok), address(ethx), 1);
+        LeashGuardV2.Mandate memory m = _plainMandate(toks, lims, new address[](0), rts);
+        guard.applyMandate(m, sig(m, 0));
+        bytes memory data = abi.encodeCall(MintTarget.run, (address(ethx), address(guard), 10));
+        vm.startPrank(agent);
+        vm.expectRevert(LeashGuardV2.ExecFailed.selector);
+        guard.execute(address(aFalse), address(target), data, 0); // approve returned false
+        vm.expectRevert(LeashGuardV2.ExecFailed.selector);
+        guard.execute(address(aRev), address(target), data, 0); // approve reverted
+        guard.execute(address(aNoRet), address(target), data, 0); // approve returned nothing: fine
+        vm.stopPrank();
+        assertEq(ethx.balanceOf(address(guard)), 10);
+    }
+
+    function _shrinkSetup() internal returns (ShrinkingToken s, ShrinkingToken s2, ShrinkTarget t, FlowAdapter aOther, FlowAdapter aOut, FlowAdapter aIn) {
+        s = new ShrinkingToken(); s2 = new ShrinkingToken(); t = new ShrinkTarget();
+        s.mint(address(guard), 100); s2.mint(address(guard), 100);
+        aOther = new FlowAdapter(address(0), 1 ether, address(s2), address(guard)); // native in, s2 out
+        aOut = new FlowAdapter(address(0), 1 ether, address(s), address(guard)); // native in, s out
+        aIn = new FlowAdapter(address(s), 10, address(s2), address(guard)); // s in, s2 out
+        address[] memory toks = new address[](3);
+        LeashGuardV2.TokenLimit[] memory lims = new LeashGuardV2.TokenLimit[](3);
+        toks[0] = address(0); lims[0] = LeashGuardV2.TokenLimit(1 ether, 3 ether);
+        toks[1] = address(s); lims[1] = LeashGuardV2.TokenLimit(100, 1000);
+        toks[2] = address(s2);
+        LeashGuardV2.Route[] memory rts = new LeashGuardV2.Route[](3);
+        rts[0] = route(address(aOther), address(t), address(0), address(s2), 1);
+        rts[1] = route(address(aOut), address(t), address(0), address(s), 1);
+        rts[2] = route(address(aIn), address(t), address(s), address(s2), 1);
+        LeashGuardV2.Mandate memory m = _plainMandate(toks, lims, new address[](0), rts);
+        guard.applyMandate(m, sig(m, 0));
+    }
+
+    function test_unexpectedOutflowIsRefused_otherTokenFalls() public {
+        (ShrinkingToken s, ShrinkingToken s2, ShrinkTarget t, FlowAdapter aOther,,) = _shrinkSetup();
+        bytes memory data = abi.encodeCall(ShrinkTarget.run, (address(s2), address(guard), 5, address(s), 3)); // s2 rises, s (another listed token) falls
+        vm.prank(agent);
+        vm.expectRevert(abi.encodeWithSelector(LeashGuardV2.UnexpectedOutflow.selector, address(s)));
+        guard.execute(address(aOther), address(t), data, 1 ether);
+    }
+
+    function test_unexpectedOutflowIsRefused_outputTokenFalls() public {
+        (ShrinkingToken s,, ShrinkTarget t,, FlowAdapter aOut,) = _shrinkSetup();
+        bytes memory data = abi.encodeCall(ShrinkTarget.run, (address(s), address(guard), 1, address(s), 5)); // the output token ends lower than it started
+        vm.prank(agent);
+        vm.expectRevert(abi.encodeWithSelector(LeashGuardV2.UnexpectedOutflow.selector, address(s)));
+        guard.execute(address(aOut), address(t), data, 1 ether);
+    }
+
+    function test_unexpectedOutflowIsRefused_inputFallsMoreThanDeclared() public {
+        (ShrinkingToken s, ShrinkingToken s2, ShrinkTarget t,,, FlowAdapter aIn) = _shrinkSetup();
+        bytes memory tooMuch = abi.encodeCall(ShrinkTarget.run, (address(s2), address(guard), 1, address(s), 25)); // declared 10, fell 25
+        vm.prank(agent);
+        vm.expectRevert(abi.encodeWithSelector(LeashGuardV2.UnexpectedOutflow.selector, address(s)));
+        guard.execute(address(aIn), address(t), tooMuch, 0);
+        bytes memory exact = abi.encodeCall(ShrinkTarget.run, (address(s2), address(guard), 1, address(s), 10)); // exactly the declared amount is fine
+        vm.prank(agent);
+        guard.execute(address(aIn), address(t), exact, 0);
+    }
+
+    function test_swapAdapterPathBounds() public {
+        address[] memory p1 = new address[](1);
+        address[] memory p2 = pathOf(address(usd), address(ethx));
+        address[] memory p4 = new address[](4);
+        address[] memory p5 = new address[](5);
+        bytes4 sel = bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)"));
+        vm.expectRevert(UniV2Adapter.BadPath.selector);
+        swapAd.inspect(address(router), abi.encodeWithSelector(sel, 1, 0, p1, address(guard), 1), 0);
+        swapAd.inspect(address(router), abi.encodeWithSelector(sel, 1, 0, p2, address(guard), 1), 0);
+        swapAd.inspect(address(router), abi.encodeWithSelector(sel, 1, 0, p4, address(guard), 1), 0);
+        vm.expectRevert(UniV2Adapter.BadPath.selector);
+        swapAd.inspect(address(router), abi.encodeWithSelector(sel, 1, 0, p5, address(guard), 1), 0);
     }
 }

@@ -101,5 +101,21 @@ await count("reports/testnet-v2-drill.json", 15);
 await count("reports/local-drill.json", 14);
 await count("reports/local-v2-drill.json", 16);
 
+if (has("reports/attack-campaign.json")) {
+  await check("attack campaign report: zero violations across all attacks", async () => {
+    const c = rd("reports/attack-campaign.json");
+    if (c.violations !== 0) throw new Error(`${c.violations} violations`);
+    if (c.attempts < 500) throw new Error(`only ${c.attempts} attacks`);
+    return `${c.attempts} attacks, ${c.accepted} accepted (all inside the mandate)`;
+  });
+}
+if (has("reports/mutation.json")) {
+  await check("mutation report present and consistent", async () => {
+    const m = rd("reports/mutation.json").summary;
+    if (m.killed + m.survived !== m.valid) throw new Error("report is inconsistent");
+    return `${m.killed} of ${m.valid} mutants killed (${m.kill_rate}%)`;
+  });
+}
+
 console.log(`\n${passed} passed, ${failed} failed${skipped ? `, ${skipped} skipped` : ""}.`);
 process.exit(failed ? 1 : 0);

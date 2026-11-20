@@ -90,6 +90,7 @@ export function compile(
   const now = opts.now ?? Math.floor(Date.now() / 1000);
   const reg = { ...DEFAULT_TOKENS, ...(opts.tokens ?? {}) };
   const f: Finding[] = [];
+  const nm = (a: string) => Object.entries(reg).find(([, t]) => t.address.toLowerCase() === a.toLowerCase())?.[0] ?? a;
   const err = (code: string, message: string) => f.push({ severity: "error", code, message });
   const warn = (code: string, message: string) => f.push({ severity: "warning", code, message });
 
@@ -122,9 +123,9 @@ export function compile(
   for (const key of new Set([...daily.keys(), ...perTx.keys()])) {
     let d = daily.get(key);
     let p = perTx.get(key);
-    if (d === undefined && p !== undefined) { d = p; warn("daily-defaulted", `No daily cap for ${key}: using the per-payment cap as the daily cap (one payment a day).`); }
-    if (p === undefined && d !== undefined) { p = d; warn("per-tx-defaulted", `No per-payment cap for ${key}: using the daily cap, so one payment can use the whole day.`); }
-    if (p! > d!) { err("per-tx-over-daily", `Per-payment cap exceeds the daily cap for ${key}. That per-payment cap could never be reached.`); continue; }
+    if (d === undefined && p !== undefined) { d = p; warn("daily-defaulted", `No daily cap for ${nm(key)}: using the per-payment cap as the daily cap (one payment a day).`); }
+    if (p === undefined && d !== undefined) { p = d; warn("per-tx-defaulted", `No per-payment cap for ${nm(key)}: using the daily cap, so one payment can use the whole day.`); }
+    if (p! > d!) { err("per-tx-over-daily", `Per-payment cap exceeds the daily cap for ${nm(key)}. That per-payment cap could never be reached.`); continue; }
     tokens.push(key as Address);
     limits.push({ perTx: p!, daily: d! });
   }
@@ -159,7 +160,7 @@ export function compile(
   if (hasFlows && !routes.length && !f.some((x) => x.severity === "error")) err("flow-unreadable", "I could not read the flow. Forms: 'swap A for B on 0xROUTER at no worse than R B per A', 'wrap QOR into WQOR on 0xWQOR', 'unwrap WQOR to QOR on 0xWQOR', 'deposit A into vault 0xV as SHARES at no worse than R SHARES per A', 'redeem SHARES from vault 0xV for A at no worse than R A per SHARES'.");
   for (const r of routes) {
     if (!tokens.includes(r.tokenIn) || limits[tokens.indexOf(r.tokenIn)]!.perTx === 0n) {
-      err("flow-uncapped", `The ${r.kind} spends ${r.tokenIn}, which has no cap. Add a cap such as '100 FUSD a day'.`);
+      err("flow-uncapped", `The ${r.kind} spends ${nm(r.tokenIn)}, which has no cap. Add a cap such as '100 FUSD a day'.`);
     }
     if (!tokens.includes(r.tokenOut)) {
       tokens.push(r.tokenOut);

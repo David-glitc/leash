@@ -54,7 +54,7 @@ Leash protects the funds an AI agent controls. This page lists who can do what, 
 | **Funds outside the guard.** | Limits cover only what the guard holds. | Keep the agent's own account near zero. |
 | **Fixed 24-hour daily bucket.** | An agent can spend one cap at the end of a bucket and another at the start of the next. | Choose caps that are safe doubled. |
 | **Window renewals.** | The chain caps an EVM window at about 6 hours; long mandates need a keeper holding the agent account's ML-DSA-87 key. | Keep that key off the agent's machine. |
-| **Unaudited code.** | Bugs may exist despite 46 tests and mutation checks. | Independent audit before any mainnet use ([AUDIT_PACKAGE.md](AUDIT_PACKAGE.md)). |
+| **Unaudited code.** | Bugs may exist despite 79 tests, invariants, mutation testing and an attack campaign. | Independent audit before any mainnet use ([AUDIT_PACKAGE.md](AUDIT_PACKAGE.md)). |
 | **Testnet only.** | `pqcVerify` is not active on mainnet. | See [ROADMAP.md](ROADMAP.md). |
 | **Native AMM and bridges** | QoreChain's native AMM cannot be called from a contract; no bridge route is live. | Out of scope. Leash does not claim to guard them. |
 

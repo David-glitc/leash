@@ -221,7 +221,7 @@ type StateV2 = { guard: Address; otherGuard: Address; adapters: { univ2: Address
 const sentenceV2 = (agent: Address, s: StateV2) =>
   `agent ${agent} up to 100 USD a day, at most 40 USD per payment, up to 2 QOR a day, at most 1 QOR per payment, up to 2 WQOR a day, at most 1 WQOR per payment, up to 100 VUSD a day, at most 50 VUSD per payment, `
   + `swap USD for ETHX on ${s.router} at no worse than 0.00049 ETHX per USD, swap USD for ETHX on ${s.shortRouter} at no worse than 0.00049 ETHX per USD, `
-  + `wrap QOR into WQOR on ${s.tokens.WQOR}, unwrap WQOR to QOR on ${s.tokens.WQOR}, deposit USD into vault ${s.vault} as VUSD at no worse than 0.99 VUSD per USD, redeem VUSD from vault ${s.vault} for USD at no worse than 0.99 USD per VUSD for 5 hours`;
+  + `wrap QOR into WQOR on ${s.tokens.WQOR}, unwrap WQOR to QOR on ${s.tokens.WQOR}, deposit USD into vault ${s.vault} as VUSD at no worse than 0.99 VUSD per USD, redeem VUSD from vault ${s.vault} for USD at no worse than 0.99 USD per VUSD for ${process.env.LEASH_DURATION ?? "5 hours"}`;
 const tokenRegV2 = (s: StateV2) => ({ USD: { address: s.tokens.USD, decimals: 18 }, ETHX: { address: s.tokens.ETHX, decimals: 18 }, WQOR: { address: s.tokens.WQOR, decimals: 18 }, VUSD: { address: s.tokens.VUSD, decimals: 18 } });
 
 async function applyV2(st: StateV2, owner: A, agent: A) {

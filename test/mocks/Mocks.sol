@@ -185,3 +185,101 @@ contract ReentrantTarget {
         require(ok, "reenter failed");
     }
 }
+
+/// A configurable stand-in for the key registry and verifier, to test the owner-key checks individually.
+contract MockKeyRegistry {
+    bool public registered = true;
+    bool public proven = true;
+    bytes public pubkey = hex"c0ffee";
+
+    function set(bool registered_, bool proven_, bytes calldata pubkey_) external {
+        registered = registered_;
+        proven = proven_;
+        pubkey = pubkey_;
+    }
+
+    function pqcVerify(bytes calldata pk, bytes calldata signature, bytes calldata message) external pure returns (bool) {
+        return keccak256(signature) == keccak256(abi.encodePacked(keccak256(abi.encodePacked("ok", pk, message))));
+    }
+
+    function pqcKeyStatus(address) external view returns (bool, uint8, bytes memory, bool) {
+        return (registered, 1, pubkey, proven);
+    }
+}
+
+/// transfer and approve report failure by returning false.
+contract FalseToken {
+    mapping(address => uint256) public balanceOf;
+    function mint(address to, uint256 a) external { balanceOf[to] += a; }
+    function transfer(address, uint256) external pure returns (bool) { return false; }
+    function approve(address, uint256) external pure returns (bool) { return false; }
+}
+
+/// USDT-style: transfer and approve return nothing.
+contract NoReturnToken {
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+    function mint(address to, uint256 a) external { balanceOf[to] += a; }
+    function transfer(address to, uint256 a) external { balanceOf[msg.sender] -= a; balanceOf[to] += a; }
+    function approve(address s, uint256 a) external { allowance[msg.sender][s] = a; }
+}
+
+/// transfer and approve revert.
+contract RevertingToken {
+    mapping(address => uint256) public balanceOf;
+    function mint(address to, uint256 a) external { balanceOf[to] += a; }
+    function transfer(address, uint256) external pure { revert("no"); }
+    function approve(address, uint256) external pure { revert("no"); }
+}
+
+/// A token whose reported balance can be quietly reduced by anyone (a rebasing or fee-on-transfer token gone wrong).
+contract ShrinkingToken {
+    mapping(address => uint256) private raw;
+    mapping(address => uint256) public shrunk;
+    mapping(address => mapping(address => uint256)) public allowance;
+    function balanceOf(address a) external view returns (uint256) { return raw[a] > shrunk[a] ? raw[a] - shrunk[a] : 0; }
+    function mint(address to, uint256 a) external { raw[to] += a; }
+    function shrink(address a, uint256 n) external { shrunk[a] += n; }
+    function approve(address s, uint256 a) external returns (bool) { allowance[msg.sender][s] = a; return true; }
+    function transfer(address to, uint256 a) external returns (bool) { raw[msg.sender] -= a; raw[to] += a; return true; }
+}
+
+/// Mints output to the guard and (optionally) shrinks one token's balance for the guard while it runs.
+contract ShrinkTarget {
+    function run(address outToken, address guard, uint256 mintAmount, address shrinkToken, uint256 shrinkAmount) external payable {
+        ShrinkingToken(outToken).mint(guard, mintAmount);
+        if (shrinkToken != address(0)) ShrinkingToken(shrinkToken).shrink(guard, shrinkAmount);
+    }
+}
+
+/// Mints a plain ERC-20 to the guard and ignores the input.
+contract MintTarget {
+    function run(address outToken, address to, uint256 amount) external payable {
+        MockERC20(outToken).mint(to, amount);
+    }
+}
+
+contract RejectingRecipient {
+    receive() external payable { revert("no thanks"); }
+}
+
+/// An agent that is a contract: when paid, it tries to call the guard again. The guard's lock must stop it.
+contract ReentrantAgent {
+    address public guard;
+    bytes4 public sawError;
+    bool public tried;
+
+    function setGuard(address g) external { guard = g; }
+
+    function pay(address token, address to, uint256 amount) external {
+        (bool ok,) = guard.call(abi.encodeWithSignature("spend(address,address,uint256)", token, to, amount));
+        require(ok, "outer spend failed");
+    }
+
+    receive() external payable {
+        if (tried) return;
+        tried = true;
+        (bool ok, bytes memory ret) = guard.call(abi.encodeWithSignature("spend(address,address,uint256)", address(0), address(this), 1));
+        if (!ok && ret.length >= 4) sawError = bytes4(ret);
+    }
+}

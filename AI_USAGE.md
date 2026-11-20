@@ -34,5 +34,9 @@ The AI's claims are not trusted. They are checked by 21 contract tests (includin
 - **Motion graphics:** built as a HyperFrames project (HTML rendered to video). Every terminal output on screen is copied by script from the real command output, unchanged.
 - **How it was made:** the video and the agent research were delegated to Claude Opus sub-agents working under my instructions. I checked the finished file myself (format, loudness, a spread of frames) before publishing. Neither the voice nor the music has been verified by ear by the AI.
 
+## Verification work (written by the AI, results measured)
+- An automated mutation-testing tool, 8 stateful invariants, a Slither run and triage, a randomized attack campaign against the live guard with an independent oracle, and 33 more tests. The first mutation round killed only 64.6% of 181 mutants, which is what the AI reported; the survivors were real gaps (events, re-arm cleanup, boundary cases, transfer failures, the V2 payment path, the reentrancy lock). After the new tests the figure is 179 of 181, and the two survivors are equivalent changes.
+- Two mistakes caught on the way: a stale build left over from deliberately breaking the contract made the bytecode check fail (found because `pnpm verify` went red; fixed by rebuilding), and the attack-campaign oracle first mislabelled a vault deposit's input token, which showed up as a false violation (fixed in the oracle, not the contract).
+
 ## No model at runtime
 The plain-English front end is a small deterministic grammar, not a language model. A model may help a person draft the sentence, but the compiler decides: anything it cannot parse exactly is refused.

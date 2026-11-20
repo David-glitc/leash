@@ -47,3 +47,16 @@ article img{max-width:100%;border-radius:12px}
 @media (max-width:860px){.docs{grid-template-columns:1fr}aside.side{position:static;max-height:none;padding:14px 0;border-bottom:1px solid var(--line)}nav.main{gap:12px}header.top .in{gap:12px;flex-wrap:wrap;height:auto;padding:10px 16px}}
 details.nav>summary{display:none;cursor:pointer;font-weight:600;padding:6px 0}
 @media (max-width:860px){details.nav>summary{display:block}}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.chip{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:7px 13px;border-radius:999px;cursor:pointer;font:inherit;font-size:14px}.chip:hover{border-color:var(--blue)}
+.pgin{width:100%;background:var(--code);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font:14px/1.6 ui-monospace,monospace;resize:vertical}
+.pgout{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:18px 20px;margin-bottom:8px;overflow:auto}
+.badge{display:inline-block;font:700 14px ui-monospace,monospace;letter-spacing:.08em;padding:4px 12px;border-radius:999px}.badge.ok{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}.badge.bad{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}
+.sumline{color:var(--muted);margin:10px 0;font-size:14px}.findings{list-style:none;padding:0;margin:10px 0}.findings li{padding:6px 0;border-top:1px solid var(--line);font-size:14.5px}.findings b{font:600 11px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.findings .error b{color:var(--red)}.findings .warning b{color:var(--amber)}.findings .gap b{color:var(--violet)}
+.pgout table,.dt{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0}.pgout th,.pgout td,.dt th,.dt td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;word-break:break-word}.pgout th,.dt th{background:var(--panel2)}
+.pgout details,.mcp details{margin:8px 0}.pgout summary,.mcp summary{cursor:pointer;color:var(--blue)}.mcp summary.err{color:var(--amber)}.pgout pre,.mcp pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:12px;overflow:auto;font-size:12.5px;max-height:340px}
+.vsum{font-weight:700;margin:6px 0}.vsum.ok{color:var(--green)}.vsum.bad{color:var(--red)}.vlist{list-style:none;padding:0;margin:8px 0;font:13.5px/1.7 ui-monospace,monospace}.vlist li{padding:3px 0;border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent)}.vlist b{display:inline-block;width:44px}.vlist .pass b{color:var(--green)}.vlist .fail b{color:var(--red)}.vlist .dim{color:var(--muted)}
+.tw{overflow-x:auto}.dt tr.p td:first-child{color:var(--green);font-weight:700}.dt tr.f td:first-child{color:var(--red);font-weight:700}h3.sm{font-size:16px;margin:22px 0 4px;color:var(--muted)}
+.vlist{overflow-x:auto}.vlist li,.findings li,.sumline,.mcp summary,.pgout summary{overflow-wrap:anywhere}.vlist li{display:block}.pgin{max-width:100%}
+main.home{overflow-x:clip}.term{max-width:100%}.pgout{max-width:100%}

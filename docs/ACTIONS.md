@@ -69,7 +69,7 @@ The MCP server adds `leash_routes`, `leash_swap`, `leash_wrap`, `leash_unwrap`, 
 
 ## What is proven, and what is not
 
-- 25 Foundry tests for the guard and adapters, including a fuzz test (swaps plus payments never exceed the daily cap). Six deliberate breakages of the contract (no rate floor, output to anywhere, caps skipped, approval left open, native value unchecked, no route needed) are each caught by the tests.
+- 79 Foundry tests (42 for the guard and adapters), 8 stateful invariants, automated mutation testing, Slither, and an 800-call attack campaign on the live guard. See [How Leash is verified](VERIFICATION.md).
 - 11 compiler tests for the flow language, 9 for the monitor rules.
 - `pnpm demo:local:v2`: a tour through every adapter with the TypeScript builders, then the Q-Day drill for actions (16 of 16).
 - `pnpm mcp:e2e`: an MCP client drives swap, native swap, wrap, unwrap and vault through the server, with refusals, a monitor read and a freeze (24 checks).

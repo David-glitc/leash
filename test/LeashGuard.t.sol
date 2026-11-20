@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {LeashGuard} from "../src/LeashGuard.sol";
+import {MockKeyRegistry, FalseToken, NoReturnToken, RevertingToken, RejectingRecipient} from "./mocks/Mocks.sol";
 
 /// Stand-in for the QoreChain precompiles on Foundry's local EVM, which has none. The real ones
 /// run on the testnet (see README, "On chain"). A signature counts as valid here when it equals
@@ -42,6 +43,11 @@ contract MockToken {
 }
 
 contract LeashGuardTest is Test {
+    event Spent(address indexed token, address indexed to, uint256 amount, uint256 spentToday);
+    event Frozen(address indexed by);
+    event MandateApplied(uint256 indexed nonce, address indexed agent, uint64 expiry, bytes32 mandateHash);
+    event Deposited(address indexed from, uint256 amount);
+
     address constant PQC_VERIFY = 0x0000000000000000000000000000000000000a01;
     address constant PQC_KEYS = 0x0000000000000000000000000000000000000a02;
 
@@ -298,5 +304,149 @@ contract LeashGuardTest is Test {
         vm.stopPrank();
         assertLe(moved, 50e18);
         assertLe(usd.balanceOf(alice), 50e18);
+    }
+
+    // ======================================================== hardening tests (written after the first mutation campaign)
+
+    function test_constantsAndInitialState() public {
+        assertEq(guard.MAX_ITEMS(), 16);
+        assertEq(guard.DAY(), 1 days);
+        assertTrue(guard.frozen(), "a new guard starts frozen");
+        arm2();
+        assertFalse(guard.frozen());
+    }
+
+    function arm2() internal {
+        LeashGuard.Mandate memory m = mandate(uint64(block.timestamp + 3 days), 20e18, 50e18);
+        guard.applyMandate(m, sig(m, guard.nonce()));
+    }
+
+    function test_depositEvents() public {
+        vm.recordLogs();
+        new LeashGuard(owner);
+        assertEq(vm.getRecordedLogs().length, 0);
+        vm.expectEmit(true, false, false, true);
+        emit Deposited(address(this), 1 ether);
+        (bool ok,) = address(guard).call{value: 1 ether}("");
+        assertTrue(ok);
+    }
+
+    function test_eventsAreEmitted() public {
+        LeashGuard.Mandate memory m = mandate(uint64(block.timestamp + 3 days), 20e18, 50e18);
+        bytes memory sg = sig(m, 0);
+        vm.expectEmit(true, true, false, true);
+        emit MandateApplied(0, agent, m.expiry, keccak256(abi.encode(m)));
+        guard.applyMandate(m, sg);
+        vm.expectEmit(true, true, false, true);
+        emit Spent(address(usd), alice, 10e18, 10e18);
+        vm.prank(agent);
+        guard.spend(address(usd), alice, 10e18);
+        vm.expectEmit(true, false, false, true);
+        emit Frozen(owner);
+        vm.prank(owner);
+        guard.freeze();
+    }
+
+    function test_capBoundariesAndBucketRollover() public {
+        arm2();
+        vm.startPrank(agent);
+        guard.spend(address(usd), alice, 20e18); // exactly the per-payment cap
+        guard.spend(address(usd), alice, 20e18);
+        guard.spend(address(usd), alice, 10e18); // exactly the daily cap (50)
+        assertEq(guard.remainingToday(address(usd)), 0);
+        vm.expectRevert(LeashGuard.OverDailyLimit.selector);
+        guard.spend(address(usd), alice, 1);
+        vm.stopPrank();
+        uint256 t0 = guard.bucketStart(address(usd));
+        vm.warp(t0 + 1 days - 1);
+        assertEq(guard.remainingToday(address(usd)), 0, "same bucket one second early");
+        vm.warp(t0 + 1 days);
+        assertEq(guard.remainingToday(address(usd)), 50e18, "fresh bucket at exactly one day");
+    }
+
+    function test_reapplyingClearsTheOldMandateCompletely() public {
+        arm2();
+        vm.prank(agent);
+        guard.spend(address(usd), alice, 10e18);
+        address[] memory toks = new address[](1);
+        LeashGuard.TokenLimit[] memory lims = new LeashGuard.TokenLimit[](1);
+        toks[0] = address(0); lims[0] = LeashGuard.TokenLimit(1 ether, 3 ether);
+        address[] memory recips = new address[](1);
+        recips[0] = mallory;
+        LeashGuard.Mandate memory m2 = LeashGuard.Mandate(agent, uint64(block.timestamp + 3 days), toks, lims, recips);
+        guard.applyMandate(m2, sig(m2, guard.nonce()));
+        (uint128 perTx, uint128 daily) = guard.limitOf(address(usd));
+        assertEq(perTx, 0); assertEq(daily, 0);
+        assertEq(guard.spentInBucket(address(usd)), 0);
+        assertEq(guard.bucketStart(address(usd)), 0);
+        assertFalse(guard.allowedRecipient(alice));
+        assertEq(guard.tokens().length, 1);
+        assertEq(guard.recipients().length, 1);
+    }
+
+    function test_mandateSizeBoundaries() public {
+        for (uint256 n = 16; n <= 17; ++n) {
+            address[] memory toks = new address[](n);
+            LeashGuard.TokenLimit[] memory lims = new LeashGuard.TokenLimit[](n);
+            for (uint256 i; i < n; ++i) toks[i] = address(uint160(0x1000 + i));
+            LeashGuard.Mandate memory m = LeashGuard.Mandate(agent, uint64(block.timestamp + 1 days), toks, lims, new address[](0));
+            bytes memory sg = sig(m, guard.nonce());
+            if (n == 17) vm.expectRevert(LeashGuard.BadMandate.selector);
+            guard.applyMandate(m, sg);
+        }
+        for (uint256 n = 16; n <= 17; ++n) {
+            address[] memory rec = new address[](n);
+            for (uint256 i; i < n; ++i) rec[i] = address(uint160(0x2000 + i));
+            LeashGuard.Mandate memory m = LeashGuard.Mandate(agent, uint64(block.timestamp + 1 days), new address[](0), new LeashGuard.TokenLimit[](0), rec);
+            bytes memory sg = sig(m, guard.nonce());
+            if (n == 17) vm.expectRevert(LeashGuard.BadMandate.selector);
+            guard.applyMandate(m, sg);
+        }
+    }
+
+    function test_ownerKeyChecksAreIndependent() public {
+        MockKeyRegistry reg = new MockKeyRegistry();
+        vm.etch(PQC_VERIFY, address(reg).code);
+        vm.etch(PQC_KEYS, address(reg).code);
+        reg = MockKeyRegistry(PQC_KEYS);
+        LeashGuard.Mandate memory m = mandate(uint64(block.timestamp + 3 days), 20e18, 50e18);
+        bytes memory sg = sig(m, 0);
+        reg.set(false, true, hex"c0ffee");
+        vm.expectRevert(LeashGuard.OwnerKeyNotRegistered.selector);
+        guard.applyMandate(m, sg);
+        reg.set(true, true, hex"");
+        vm.expectRevert(LeashGuard.OwnerKeyNotRegistered.selector);
+        guard.applyMandate(m, sg);
+        reg.set(true, false, hex"c0ffee");
+        vm.expectRevert(LeashGuard.OwnerKeyNotProven.selector);
+        guard.applyMandate(m, sg);
+        reg.set(true, true, hex"c0ffee");
+        guard.applyMandate(m, sg);
+    }
+
+    function test_failedTransfersAreReported() public {
+        FalseToken falseTok = new FalseToken();
+        NoReturnToken noRet = new NoReturnToken();
+        RevertingToken revTok = new RevertingToken();
+        RejectingRecipient bad = new RejectingRecipient();
+        falseTok.mint(address(guard), 100); noRet.mint(address(guard), 100); revTok.mint(address(guard), 100);
+        address[] memory toks = new address[](4);
+        LeashGuard.TokenLimit[] memory lims = new LeashGuard.TokenLimit[](4);
+        toks[0] = address(0); toks[1] = address(falseTok); toks[2] = address(noRet); toks[3] = address(revTok);
+        for (uint256 i; i < 4; ++i) lims[i] = LeashGuard.TokenLimit(50 ether, 90 ether);
+        address[] memory recips = new address[](2);
+        recips[0] = alice; recips[1] = address(bad);
+        LeashGuard.Mandate memory m = LeashGuard.Mandate(agent, uint64(block.timestamp + 3 days), toks, lims, recips);
+        guard.applyMandate(m, sig(m, 0));
+        vm.startPrank(agent);
+        vm.expectRevert(LeashGuard.TransferFailed.selector);
+        guard.spend(address(0), payable(address(bad)), 1);
+        vm.expectRevert(LeashGuard.TransferFailed.selector);
+        guard.spend(address(falseTok), alice, 1);
+        vm.expectRevert(LeashGuard.TransferFailed.selector);
+        guard.spend(address(revTok), alice, 1);
+        guard.spend(address(noRet), alice, 7);
+        vm.stopPrank();
+        assertEq(noRet.balanceOf(alice), 7);
     }
 }

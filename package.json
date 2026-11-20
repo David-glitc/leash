@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "mcp": "tsx mcp/server.ts",
     "verify": "tsx tools/verify.ts",
+    "campaign": "tsx tools/campaign.ts",
     "docs": "python3 site/build.py",
     "mcp:smoke": "tsx mcp/smoke.ts",
     "mcp:e2e": "tsx mcp/e2e-local.ts",

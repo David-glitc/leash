@@ -11,3 +11,8 @@ remappings = ["forge-std/=lib/forge-std/src/"]
 
 [rpc_endpoints]
 qorechain_testnet = "https://evm-testnet.qore.host"
+
+[invariant]
+runs = 256
+depth = 60
+fail_on_revert = false
