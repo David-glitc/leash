@@ -6,7 +6,7 @@ Built for QoreChain Developer Fest, "Build Before Q-Day", Post-Quantum AI Agents
 
 ![Leash](cover.png)
 
-**Demo video (2:18, captions):** https://david-film-library.pages.dev/media/leash-demo.mp4
+**Demo video (2:56, voiceover, music, captions):** https://david-film-library.pages.dev/media/leash-demo.mp4
 
 ## The problem
 
