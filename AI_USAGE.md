@@ -22,7 +22,8 @@ Leash was built with Claude Code (Claude Sonnet 5.5) working alongside the autho
 ## What the AI did for v2
 - Designed LeashGuardV2 (routes, measured value flows, rate floors), the adapters, the plain-English flow grammar, the monitor rules and the MCP execution tools, and ran them: 25 more contract tests, six mutation checks, a local drill, an MCP end-to-end test and a live testnet run.
 - Research on QoreChain's bridge, AMM, payment features and agent harness formats was delegated to a Claude Opus sub-agent working read-only from public documentation; its findings (no live bridge route, native AMM not callable from a contract) shaped what is and is not claimed.
-- The author decided to extend the project, and every action on accounts and funds.
+- Wrote the judge's guide, threat model, audit package, FAQ and roadmap, the read-only `pnpm verify` script (which reads the live testnet and compares the deployed bytecode to this source; one changed constant in the source turns it red), and the documentation site at leash.kierkegaard.space, which is built from the same markdown.
+- The author decided to extend the project, publish the site, and every action on accounts and funds.
 
 ## How the work is verified
 The AI's claims are not trusted. They are checked by 21 contract tests (including a fuzz test), 10 compiler tests, a local end-to-end drill, a mutation check that breaks the contract three ways and confirms the drill fails each time, and a run on the real testnet with a genuine ML-DSA-87 signature.

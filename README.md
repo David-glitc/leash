@@ -6,7 +6,23 @@ Built for QoreChain Developer Fest, "Build Before Q-Day", Post-Quantum AI Agents
 
 ![Leash](cover.png)
 
+**Docs:** https://leash.kierkegaard.space · **For judges:** [verify everything in five minutes](docs/JUDGES.md) (`pnpm verify`)
+
 **Demo video (2:56, voiceover, music, captions):** https://david-film-library.pages.dev/media/leash-demo.mp4
+
+## Documentation
+
+| | |
+|---|---|
+| [Judge's guide](docs/JUDGES.md) | every claim with a command or link; `pnpm verify` checks the live testnet, read-only |
+| [Getting started](docs/GETTING_STARTED.md) | install, write a leash, run the demos, deploy to the testnet |
+| [Guarded actions (v2)](docs/ACTIONS.md) | how the guard measures swaps, wraps and vaults |
+| [Flow language](docs/FLOW_LANGUAGE.md) | describe value flows in plain English |
+| [Agents and MCP](mcp/README.md) | Hermes Agent, Claude Code, Cursor |
+| [Threat model](docs/THREAT_MODEL.md) · [Audit package](docs/AUDIT_PACKAGE.md) · [Security](SECURITY.md) | what stops each attack, scope and invariants for an auditor, how to report |
+| [FAQ](docs/FAQ.md) · [Roadmap](docs/ROADMAP.md) | questions we expect, what mainnet needs |
+
+The same pages are published at https://leash.kierkegaard.space (built from these files by `python3 site/build.py`).
 
 ## The problem
 
@@ -47,6 +63,7 @@ pnpm demo:local           # v1: payments, the full flow and the drill on a local
 pnpm demo:local:v2        # v2: every adapter, then the drill for swaps, wraps and vaults (16 checks)
 pnpm demo:monitor         # the monitor catching a burst and an unexplained outflow, freezing with a stop-only key
 pnpm mcp:e2e              # an MCP client drives swaps, wraps and vaults through the server (24 checks)
+pnpm verify               # read-only check of the live testnet deployment (no keys): 20 checks
 pnpm compile "agent 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 up to 3 QOR a day, at most 1 QOR per payment, only to 0x90F79bf6EB2c4f870365E785982E1f101E93b906 for 3 hours"
 ```
 

@@ -17,6 +17,8 @@
     "testnet:v2": "tsx tools/testnet.ts v2",
     "typecheck": "tsc --noEmit",
     "mcp": "tsx mcp/server.ts",
+    "verify": "tsx tools/verify.ts",
+    "docs": "python3 site/build.py",
     "mcp:smoke": "tsx mcp/smoke.ts",
     "mcp:e2e": "tsx mcp/e2e-local.ts",
     "mcp:live": "tsx mcp/live-demo.ts",
