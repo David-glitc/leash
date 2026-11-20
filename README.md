@@ -31,6 +31,7 @@ A mandate takes effect only when `LeashGuard` verifies an ML-DSA-87 signature on
 - `tools/attack.ts`: the **Q-Day drill**. It plays a leaked agent key and a leaked owner key against the guard.
 - `tools/testnet.ts`: the pipeline for the real testnet (register keys, open windows, deploy, sign and apply a mandate, run the drill).
 - `tools/local.ts`: the same flow on a local Anvil node with the precompiles stubbed, no wallet needed.
+- `mcp/`: an MCP server and agent skill so Hermes Agent, Claude Code, Cursor and others can pay through the guard. See [mcp/README.md](mcp/README.md).
 
 ## Try it
 
@@ -52,6 +53,10 @@ LEASH REFUSED
   [error] Give at least one cap: '50 fUSD a day' or 'at most 20 fUSD per payment'.
 ```
 
+## Use it from an agent
+
+Leash ships an MCP server (`leash_status`, `leash_check`, `leash_pay`, `leash_freeze`, `leash_compile`, `leash_loosen_prepare`, `leash_drill_local`) and a skill. The agent holds only its own key; there is no tool that loosens a mandate. Setup for Hermes Agent, Claude Code and Cursor is in [mcp/README.md](mcp/README.md). Trading and bridging are not guarded yet, and the doc says why.
+
 ## What was proven, and where
 
 | Check | Result |
@@ -62,8 +67,9 @@ LEASH REFUSED
 | **Mutation check**: break the guard on purpose | The drill fails each time: no per-payment cap (13/14), no post-quantum check (9/14), owner key allowed to spend (13/14) |
 | **Real testnet**: `applyMandate` with a real ML-DSA-87 signature | Accepted by the `pqcVerify` precompile |
 | **Real testnet**: Q-Day drill | 13 of 13 as expected |
+| **Real testnet**: an MCP client pays through the guard | A 0.1 QOR payment succeeded; 5 QOR and an off-allowlist address were refused by the chain ([transcript](reports/mcp-live-demo.json)) |
 
-On the testnet, guard [`0xa0ebb5daf8229da498346f0c824276d126c2a34c`](https://explore.qore.network/address/0xa0ebb5daf8229da498346f0c824276d126c2a34c) was deployed in `0x1670f698…9669` and armed in `0x53d44e69…14ae`; full hashes are in [`reports/testnet-drill.json`](reports/testnet-drill.json).
+On the testnet, guard [`0xa0ebb5daf8229da498346f0c824276d126c2a34c`](https://explore.qore.network/address/0xa0ebb5daf8229da498346f0c824276d126c2a34c) was deployed in `0x1670f698…9669` and armed in `0x53d44e69…14ae`; full hashes are in [`reports/testnet-drill.json`](reports/testnet-drill.json). The drill ends by freezing the guard; `pnpm testnet rearm` later re-armed it with a second owner-signed ML-DSA-87 mandate (nonce 2) for the MCP demo.
 
 ### The drill
 

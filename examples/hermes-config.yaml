@@ -1,0 +1,12 @@
+# Add to ~/.hermes/config.yaml, then run /reload-mcp in Hermes.
+# Use the tsx binary directly: `pnpm run` prints a banner on stdout and breaks the MCP stdio stream.
+mcp_servers:
+  leash:
+    command: "/path/to/leash/node_modules/.bin/tsx"
+    args: ["/path/to/leash/mcp/server.ts"]
+    env:
+      LEASH_GUARD: "0xa0ebb5daf8229da498346f0c824276d126c2a34c"   # your guard
+      LEASH_AGENT_KEY: "0x..."                                     # the AGENT's key only, never the owner's
+  qorechain:                       # optional: QoreChain's own read-only MCP (14 tools)
+    command: "npx"
+    args: ["-y", "@qorechain/mcp"]

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "leash": {
+      "command": "/path/to/leash/node_modules/.bin/tsx",
+      "args": ["/path/to/leash/mcp/server.ts"],
+      "env": { "LEASH_GUARD": "0xa0ebb5daf8229da498346f0c824276d126c2a34c", "LEASH_AGENT_KEY": "${LEASH_AGENT_KEY}" }
+    },
+    "qorechain": { "command": "npx", "args": ["-y", "@qorechain/mcp"] }
+  }
+}

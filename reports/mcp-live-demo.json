@@ -1,0 +1,129 @@
+{
+  "network": "qorechain-diana",
+  "guard": "0xa0ebb5daf8229da498346f0c824276d126c2a34c",
+  "calls": [
+    {
+      "tool": "leash_status",
+      "args": {},
+      "isError": false,
+      "result": {
+        "guard": "0xa0ebb5daf8229da498346f0c824276d126c2a34c",
+        "chainId": 9800,
+        "owner": "0x9fA42BbB41d8a7c13123e3BE086b79bc924B2750",
+        "agent": "0x3E137Aa22320c998405C917aa8A74d67fF23c705",
+        "frozen": false,
+        "nonce": "2",
+        "expiry": 1795175589,
+        "expiresInSeconds": 17769,
+        "expired": false,
+        "nativeBalance": "7.8",
+        "limits": [
+          {
+            "token": "QOR",
+            "address": "0x0000000000000000000000000000000000000000",
+            "perPayment": "1",
+            "daily": "3",
+            "remainingToday": "2.9"
+          }
+        ],
+        "recipients": [
+          "0x794B8d53ddcF93c05D97134f15Dc905223accD3e"
+        ]
+      }
+    },
+    {
+      "tool": "leash_check",
+      "args": {
+        "token": "QOR",
+        "to": "0x794B8d53ddcF93c05D97134f15Dc905223accD3e",
+        "amount": "0.1"
+      },
+      "isError": false,
+      "result": {
+        "allowed": true,
+        "token": "QOR",
+        "to": "0x794B8d53ddcF93c05D97134f15Dc905223accD3e",
+        "amount": "0.1"
+      }
+    },
+    {
+      "tool": "leash_pay",
+      "args": {
+        "token": "QOR",
+        "to": "0x794B8d53ddcF93c05D97134f15Dc905223accD3e",
+        "amount": "0.1",
+        "confirm": true
+      },
+      "isError": false,
+      "result": {
+        "sent": true,
+        "txHash": "0x18f6dd9ff766fb1da54b84020acfa5c865d399cb69c680b4254e3ca588bb4550",
+        "block": "10418904",
+        "token": "QOR",
+        "to": "0x794B8d53ddcF93c05D97134f15Dc905223accD3e",
+        "amount": "0.1"
+      }
+    },
+    {
+      "tool": "leash_check",
+      "args": {
+        "token": "QOR",
+        "to": "0x794B8d53ddcF93c05D97134f15Dc905223accD3e",
+        "amount": "5"
+      },
+      "isError": false,
+      "result": {
+        "allowed": false,
+        "refusedBy": "OverPerTxLimit",
+        "token": "QOR",
+        "to": "0x794B8d53ddcF93c05D97134f15Dc905223accD3e",
+        "amount": "5"
+      }
+    },
+    {
+      "tool": "leash_check",
+      "args": {
+        "token": "QOR",
+        "to": "0x000000000000000000000000000000000000dEaD",
+        "amount": "0.1"
+      },
+      "isError": false,
+      "result": {
+        "allowed": false,
+        "refusedBy": "RecipientNotAllowed",
+        "token": "QOR",
+        "to": "0x000000000000000000000000000000000000dEaD",
+        "amount": "0.1"
+      }
+    },
+    {
+      "tool": "leash_status",
+      "args": {},
+      "isError": false,
+      "result": {
+        "guard": "0xa0ebb5daf8229da498346f0c824276d126c2a34c",
+        "chainId": 9800,
+        "owner": "0x9fA42BbB41d8a7c13123e3BE086b79bc924B2750",
+        "agent": "0x3E137Aa22320c998405C917aa8A74d67fF23c705",
+        "frozen": false,
+        "nonce": "2",
+        "expiry": 1795175589,
+        "expiresInSeconds": 17762,
+        "expired": false,
+        "nativeBalance": "7.7",
+        "limits": [
+          {
+            "token": "QOR",
+            "address": "0x0000000000000000000000000000000000000000",
+            "perPayment": "1",
+            "daily": "3",
+            "remainingToday": "2.8"
+          }
+        ],
+        "recipients": [
+          "0x794B8d53ddcF93c05D97134f15Dc905223accD3e"
+        ]
+      }
+    }
+  ]
+}

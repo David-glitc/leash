@@ -11,10 +11,14 @@
     "demo:local": "tsx tools/local.ts",
     "accounts": "tsx tools/accounts.ts",
     "testnet": "tsx tools/testnet.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "mcp": "tsx mcp/server.ts",
+    "mcp:smoke": "tsx mcp/smoke.ts",
+    "mcp:live": "tsx mcp/live-demo.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@qorechain/evm": "^0.14.0",
     "@qorechain/sdk": "^0.14.0",
     "viem": "^2.0.0",

@@ -189,13 +189,32 @@ async function drill(st: State, t0 = Date.now()) {
 }
 
 
+/** Re-arm an existing guard with a fresh 5-hour mandate (same recipient and limits), signed by the owner's real ML-DSA-87 key, and reopen the agent's scoped window. */
+async function rearm() {
+  const st: State = JSON.parse(readFileSync("reports/testnet-state.json", "utf8"));
+  const owner = await acct("owner"), agent = await acct("agent");
+  const cur = await mandateFromChain(st.guard);
+  const head = await pub.getBlock();
+  const compiled = compile(`agent ${agent.evm.address} may spend up to 3 QOR a day, at most 1 QOR per payment, only to ${cur.recipients[0]} for 5 hours`, { now: Number(head.timestamp), guard: st.guard });
+  if (!compiled.ok || !compiled.mandate) throw new Error(JSON.stringify(compiled.findings));
+  const m = compiled.mandate;
+  const n = (await pub.readContract({ address: st.guard, abi: guardAbi, functionName: "nonce" })) as bigint;
+  const message = (await pub.readContract({ address: st.guard, abi: guardAbi, functionName: "mandateMessage", args: [wireMandate(m), n] })) as Hex;
+  const sig = toHex(pqcSign(owner.unified.pqc.secretKey, hexToBytes(message)));
+  await openWindow(owner, { blocks: 600n, maxTxs: 4n, gas: 1_500_000n });
+  const h = await owner.wallet.writeContract({ address: st.guard, abi: guardAbi, functionName: "applyMandate", args: [wireMandate(m), sig], gas: 1_500_000n, ...FEES, account: owner.evm, chain });
+  const r = await pub.waitForTransactionReceipt({ hash: h });
+  console.log(`re-armed guard ${st.guard}: nonce ${n} -> ${n + 1n}, ${r.status} (${h})`);
+  await openWindow(agent, { blocks: 1200n, maxTxs: 10n, gas: 1_500_000n, targets: [st.guard] });
+}
+
 async function resume() {
   const f = "reports/testnet-state.json";
   const st: State = process.argv[3] ? { guard: process.argv[3] as Address, otherGuard: process.argv[4] as Address | undefined } : JSON.parse(readFileSync(f, "utf8"));
   await drill(st);
 }
 
-const cmds: Record<string, () => Promise<void>> = { status, register, fund, all, drill: resume };
+const cmds: Record<string, () => Promise<void>> = { status, register, fund, all, drill: resume, rearm };
 const c = cmds[process.argv[2] ?? "status"];
-if (!c) { console.error("Use: status | register | fund | all | drill [guard] [otherGuard]"); process.exit(1); }
+if (!c) { console.error("Use: status | register | fund | all | drill [guard] [otherGuard] | rearm"); process.exit(1); }
 c().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });
