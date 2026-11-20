@@ -6,6 +6,8 @@ Built for QoreChain Developer Fest, "Build Before Q-Day", Post-Quantum AI Agents
 
 ![Leash](cover.png)
 
+**Demo video (2:18, captions):** https://david-film-library.pages.dev/media/leash-demo.mp4
+
 ## The problem
 
 An AI agent that pays for things holds a key, and today that key is secp256k1. If it leaks, or is broken by a quantum computer, the agent can be drained. Giving the agent a spending limit does not help if the same classical key can raise the limit.
