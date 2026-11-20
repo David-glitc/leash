@@ -32,10 +32,11 @@ curl -s $RPC -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"me
 ```sh
 git clone https://github.com/David-glitc/leash && cd leash
 pnpm install
+forge install foundry-rs/forge-std --no-git && forge build   # for the bytecode check; needs Foundry
 pnpm verify
 ```
 
-`pnpm verify` is read-only and needs no keys (22 checks). It reads the live testnet and checks:
+`pnpm verify` is read-only and needs no keys (22 checks; without `forge build` the two bytecode checks are skipped and it says so). It reads the live testnet and checks:
 
 - both guards exist and their owner is the registered owner account;
 - the deployed v2 bytecode equals what this source compiles to (immutables masked);

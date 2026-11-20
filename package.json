@@ -24,7 +24,7 @@
     "mcp:e2e": "tsx mcp/e2e-local.ts",
     "mcp:live": "tsx mcp/live-demo.ts",
     "mcp:live:v2": "tsx mcp/live-demo-v2.ts",
-    "ci": "forge test && pnpm typecheck && tsx --test tools/*.test.ts && pnpm demo:local && pnpm demo:local:v2 && pnpm demo:monitor && pnpm mcp:e2e && python3 site/build.py"
+    "check": "forge test && pnpm typecheck && tsx --test tools/*.test.ts && pnpm demo:local && pnpm demo:local:v2 && pnpm demo:monitor && pnpm mcp:e2e"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",

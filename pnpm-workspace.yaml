@@ -1,0 +1,3 @@
+# pnpm 10 and later skip dependency build scripts unless allowed; esbuild (used by tsx) needs its install script
+allowBuilds:
+  esbuild: true

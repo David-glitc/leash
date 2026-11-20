@@ -30,7 +30,7 @@ async function retry<T>(fn: () => Promise<T>): Promise<T> {
   for (let i = 1; ; i++) { try { return await fn(); } catch (e) { if (i >= 3) throw e; await new Promise((r) => setTimeout(r, 1500 * i)); } }
 }
 const check = async (what: string, fn: () => Promise<string | true>) => {
-  try { const r = await fn(); out("PASS", what, r === true ? "" : r); } catch (e) { out("FAIL", what, e instanceof Error ? e.message : String(e)); }
+  try { const r = await fn(); if (r === "skipped") return; out("PASS", what, r === true ? "" : r); } catch (e) { out("FAIL", what, e instanceof Error ? e.message : String(e)); }
 };
 const short = (h: string) => `${h.slice(0, 10)}…${h.slice(-4)}`;
 
@@ -61,7 +61,7 @@ await check("connected to qorechain-diana (EVM chain id 9800)", async () => { co
 
 // v1
 await check("v1 guard: owner is the registered owner account", async () => { const o = (await retry(() => pub.readContract({ address: GUARD_V1, abi: guardAbi, functionName: "owner" }))) as Address; if (o.toLowerCase() !== OWNER.toLowerCase()) throw new Error(`owner is ${o}`); return o; });
-await check("v1 guard: deployed code equals this source", () => sameCode(GUARD_V1, "out/LeashGuard.sol/LeashGuard.json").catch((e) => { if (/forge build/.test(String(e.message))) { out("SKIP", "v1 bytecode check", e.message); return "skipped" as never; } throw e; }));
+await check("v1 guard: deployed code equals this source", () => sameCode(GUARD_V1, "out/LeashGuard.sol/LeashGuard.json").catch((e) => { if (/forge build/.test(String(e.message))) { out("SKIP", "v1 bytecode check", e.message); return "skipped"; } throw e; }));
 const v1 = rd("reports/testnet-drill.json");
 await check("v1: applyMandate succeeded, so pqcVerify accepted a real ML-DSA-87 signature", async () => { const r = await receiptOk(v1.applyTx, GUARD_V1); return `${short(v1.applyTx)} gas ${r.gasUsed}`; });
 
@@ -69,7 +69,7 @@ await check("v1: applyMandate succeeded, so pqcVerify accepted a real ML-DSA-87 
 await check("v2 guard: owner is the registered owner account", async () => { const o = (await retry(() => pub.readContract({ address: GUARD_V2, abi: guardAbi, functionName: "owner" }))) as Address; if (o.toLowerCase() !== OWNER.toLowerCase()) throw new Error(`owner is ${o}`); return o; });
 await check("v2 guard: at least two owner-signed mandates applied (nonce)", async () => { const n = (await retry(() => pub.readContract({ address: GUARD_V2, abi: guardAbi, functionName: "nonce" }))) as bigint; if (n < 2n) throw new Error(`nonce is ${n}`); return `nonce ${n}`; });
 await check("v2 guard: six routes in the mandate (2 swaps, wrap, unwrap, deposit, redeem)", async () => { const r = (await retry(() => pub.readContract({ address: GUARD_V2, abi: guardAbi, functionName: "routes" }))) as unknown[]; if (r.length !== 6) throw new Error(`${r.length} routes`); return true; });
-await check("v2 guard: deployed code equals this source", () => sameCode(GUARD_V2, "out/LeashGuardV2.sol/LeashGuardV2.json").catch((e) => { if (/forge build/.test(String(e.message))) { out("SKIP", "v2 bytecode check", e.message); return "skipped" as never; } throw e; }));
+await check("v2 guard: deployed code equals this source", () => sameCode(GUARD_V2, "out/LeashGuardV2.sol/LeashGuardV2.json").catch((e) => { if (/forge build/.test(String(e.message))) { out("SKIP", "v2 bytecode check", e.message); return "skipped"; } throw e; }));
 const v2 = rd("reports/testnet-v2-drill.json");
 await check("v2: applyMandate with routes succeeded (a real ML-DSA-87 signature)", async () => { const r = await receiptOk(v2.applyTx, GUARD_V2); return `${short(v2.applyTx)} gas ${r.gasUsed}`; });
 for (const t of v2.tour as { kind: string; tx: Hex }[]) {

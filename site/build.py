@@ -4,7 +4,10 @@ Needs the `markdown` package (pip install markdown). The site and the repo docs 
 from pathlib import Path
 import html, os, re, shutil, sys, datetime
 sys.path.insert(0, os.environ.get("MDLIB", ""))
-import markdown
+try:
+    import markdown
+except ImportError:
+    sys.exit("site/build.py needs the Python markdown package: pip install markdown")
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = Path(__file__).resolve().parent
