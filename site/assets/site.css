@@ -63,7 +63,7 @@ details.nav>summary{display:none;cursor:pointer;font-weight:600;padding:6px 0}
 .vlist{overflow-x:auto}.vlist li,.findings li,.sumline,.mcp summary,.pgout summary{overflow-wrap:anywhere}.vlist li{display:block}.pgin{max-width:100%}
 main.home{overflow-x:clip}.term{max-width:100%}.pgout{max-width:100%}
 
-.brand{display:inline-flex;align-items:center;gap:9px}.lg-sq{fill:var(--text)}.lg-ci{fill:var(--blue)}.lg-ln{stroke:var(--blue);stroke-width:2.4;stroke-linecap:round;fill:none}
+.brand{display:inline-flex;align-items:center;gap:9px}.brand img{display:block;border-radius:8px}
 .themebtn{width:34px;height:34px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);display:grid;place-items:center;cursor:pointer}
 .themebtn:hover{border-color:var(--muted)}.themebtn svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .themebtn .sun{display:none}:root[data-theme="light"] .themebtn .sun{display:block}:root[data-theme="light"] .themebtn .moon{display:none}

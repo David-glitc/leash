@@ -63,7 +63,7 @@ def head(title: str, desc: str, path: str) -> str:
 
 def header(active: str = "") -> str:
     def a(href, label, key): return f'<a href="{href}"{" class=on" if active == key else ""}>{label}</a>'
-    return f"""<header class="top"><div class="in"><a class="brand" href="/"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><rect x="17" y="4" width="11" height="11" rx="3" class="lg-sq"/><circle cx="9" cy="22" r="6" class="lg-ci"/><path d="M13.2 17.8 19 12.6" class="lg-ln"/></svg>Leash</a><nav class="main">
+    return f"""<header class="top"><div class="in"><a class="brand" href="/"><img src="/assets/mark.svg" width="28" height="28" alt="">Leash</a><nav class="main">
 {a("/try/", "Try it", "try")}{a("/docs/judges/", "For judges", "judges")}{a("/docs/getting-started/", "Docs", "docs")}{a("/docs/threat-model/", "Security", "sec")}{a(VIDEO, "Demo video", "v")}<a href="{GH}">GitHub</a></nav><button class="themebtn" type="button" id="theme-toggle" aria-label="Switch between dark and light theme"><svg class="moon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg><svg class="sun" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div></header>"""
 
 FOOT = f"""<footer>Leash is open source (Apache-2.0), unaudited, and runs on the QoreChain testnet. Built for QoreChain Build Before Q-Day.<br>
