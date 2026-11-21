@@ -1,4 +1,4 @@
-<p align="center"><img src="site/assets/logo.svg" width="140" alt="Leash logo: a gradient leash from an agent node to a keyhole guard"></p>
+<p align="center"><img src="site/assets/mark.svg" width="96" alt="Leash logo: an agent node joined by a leash to a guard"></p>
 
 # Leash
 
